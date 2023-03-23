@@ -1,2 +1,2 @@
 # MLPCpp
-Multi-layer perceptron organization and evaluation algorithm
+Multi-layer perceptron organization and evaluation algorithm:

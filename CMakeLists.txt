@@ -23,4 +23,4 @@ include_directories(${APP_INCLUDE_DIRS})
 
 # Add executable target with source files listed in SOURCE_FILES variable
 #add_executable(mlpcpp ${SOURCE_FILES})
-add_executable(mlpcpp ${APP_SOURCES})
+add_executable(${app_name} ${APP_SOURCES})

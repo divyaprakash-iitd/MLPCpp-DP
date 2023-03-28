@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "CNeuron.hpp"
+#include "variable_def.hpp"
 
 namespace MLPToolbox {
 class CLayer {

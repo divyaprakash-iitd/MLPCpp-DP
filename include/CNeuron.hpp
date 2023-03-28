@@ -10,24 +10,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <limits>
-
-#if defined(HAVE_OMP)
-using su2double = codi::RealReverseIndexOpenMP;
-#else
-#if defined(CODI_INDEX_TAPE)
-using su2double = codi::RealReverseIndex;
-#else
-using su2double = codi::RealReverse;
-#endif
-#endif
-#elif defined(CODI_FORWARD_TYPE)  // forward mode AD
-#include "codi.hpp"
-using su2double = codi::RealForward;
-
-#else  // primal / direct / no AD
-using su2double = double;
-#endif
-
+#include "variable_def.hpp"
 
 namespace MLPToolbox {
 class CNeuron {

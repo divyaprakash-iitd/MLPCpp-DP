@@ -16,15 +16,15 @@
 
 using namespace std;
 
-void MLPToolbox::CNeuralNetwork::Predict(std::vector<double> &inputs,
+void MLPToolbox::CNeuralNetwork::Predict(std::vector<su2double> &inputs,
                                          bool compute_gradient) {
   /*--- Evaluate MLP for given inputs ---*/
 
-  double y = 0, dy_dx = 0; // Activation function output.
+  su2double y = 0, dy_dx = 0; // Activation function output.
   bool same_point = true;
   /* Normalize input and check if inputs are the same w.r.t last evaluation */
   for (auto iNeuron = 0u; iNeuron < inputLayer->GetNNeurons(); iNeuron++) {
-    double x_norm = (inputs[iNeuron] - input_norm[iNeuron].first) /
+    su2double x_norm = (inputs[iNeuron] - input_norm[iNeuron].first) /
                     (input_norm[iNeuron].second - input_norm[iNeuron].first);
     if (abs(x_norm - inputLayer->GetOutput(iNeuron)) > 0)
       same_point = false;
@@ -38,14 +38,14 @@ void MLPToolbox::CNeuralNetwork::Predict(std::vector<double> &inputs,
   /* Skip evaluation process if current point is the same as during the previous
    * evaluation */
   if (!same_point) {
-    double alpha = 1.67326324;
-    double lambda = 1.05070098;
+    su2double alpha = 1.67326324;
+    su2double lambda = 1.05070098;
     /* Traverse MLP and compute inputs and outputs for the neurons in each layer
      */
     for (auto iLayer = 1u; iLayer < n_hidden_layers + 2; iLayer++) {
       auto nNeurons_current =
           total_layers[iLayer]->GetNNeurons(); // Neuron count of current layer
-      double x;                                // Neuron input value
+      su2double x;                                // Neuron input value
 
       /* Compute and store input value for each neuron */
       for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
@@ -253,7 +253,7 @@ void MLPToolbox::CNeuralNetwork::Predict(std::vector<double> &inputs,
   }
   /* Compute and de-normalize MLP output */
   for (auto iNeuron = 0u; iNeuron < outputLayer->GetNNeurons(); iNeuron++) {
-    double y_norm = outputLayer->GetOutput(iNeuron);
+    su2double y_norm = outputLayer->GetOutput(iNeuron);
     y = y_norm * (output_norm[iNeuron].second - output_norm[iNeuron].first) +
         output_norm[iNeuron].first;
     if (compute_gradient) {
@@ -325,7 +325,7 @@ void MLPToolbox::CNeuralNetwork::SizeWeights() {
         hiddenLayers[n_hidden_layers - 1]->GetNNeurons());
   }
 
-  ANN_outputs = new double[outputLayer->GetNNeurons()];
+  ANN_outputs = new su2double[outputLayer->GetNNeurons()];
   dOutputs_dInputs.resize(outputLayer->GetNNeurons());
   for (auto iOutput = 0u; iOutput < outputLayer->GetNNeurons(); iOutput++)
     dOutputs_dInputs[iOutput].resize(inputLayer->GetNNeurons());

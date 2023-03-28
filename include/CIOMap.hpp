@@ -13,6 +13,23 @@
 #include <string>
 #include <vector>
 
+#if defined(HAVE_OMP)
+using su2double = codi::RealReverseIndexOpenMP;
+#else
+#if defined(CODI_INDEX_TAPE)
+using su2double = codi::RealReverseIndex;
+#else
+using su2double = codi::RealReverse;
+#endif
+#endif
+#elif defined(CODI_FORWARD_TYPE)  // forward mode AD
+#include "codi.hpp"
+using su2double = codi::RealForward;
+
+#else  // primal / direct / no AD
+using su2double = double;
+#endif
+
 namespace MLPToolbox {
 
 class CLookUp_ANN;
@@ -174,9 +191,9 @@ public:
    * \param[in] inputs - call inputs
    * \return std::vector with call inputs in the correct order of the loaded MLP
    */
-  std::vector<double> GetMLPInputs(std::size_t i_Map,
-                                   std::vector<double> &inputs) const {
-    std::vector<double> MLP_input;
+  std::vector<su2double> GetMLPInputs(std::size_t i_Map,
+                                   std::vector<su2double> &inputs) const {
+    std::vector<su2double> MLP_input;
     MLP_input.resize(Input_Map[i_Map].size());
 
     for (std::size_t iInput = 0; iInput < Input_Map[i_Map].size(); iInput++) {

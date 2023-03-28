@@ -108,9 +108,9 @@ void MLPToolbox::CReadNeuralNetwork::ReadMLPFile() {
         if (line.compare("") != 0) {
           istringstream input_norm_stream(line);
           input_norm_stream >> word;
-          double input_min = stold(word);
+          su2double input_min = stold(word);
           input_norm_stream >> word;
-          double input_max = stold(word);
+          su2double input_max = stold(word);
           input_norm[iInput] = make_pair(input_min, input_max);
         }
       }
@@ -140,9 +140,9 @@ void MLPToolbox::CReadNeuralNetwork::ReadMLPFile() {
         if (line.compare("") != 0) {
           istringstream output_norm_stream(line);
           output_norm_stream >> word;
-          double output_min = stold(word);
+          su2double output_min = stold(word);
           output_norm_stream >> word;
-          double output_max = stold(word);
+          su2double output_max = stold(word);
           output_norm[iOutput] = make_pair(output_min, output_max);
         }
       }

@@ -17,6 +17,24 @@
 #include "CIOMap.hpp"
 #include "CNeuralNetwork.hpp"
 
+#if defined(HAVE_OMP)
+using su2double = codi::RealReverseIndexOpenMP;
+#else
+#if defined(CODI_INDEX_TAPE)
+using su2double = codi::RealReverseIndex;
+#else
+using su2double = codi::RealReverse;
+#endif
+#endif
+#elif defined(CODI_FORWARD_TYPE)  // forward mode AD
+#include "codi.hpp"
+using su2double = codi::RealForward;
+
+#else  // primal / direct / no AD
+using su2double = double;
+#endif
+
+
 namespace MLPToolbox {
 
 class CLookUp_ANN {
@@ -60,8 +78,8 @@ public:
    * - pointers to output variables \returns Within output normalization range.
    */
   unsigned long PredictANN(CIOMap *input_output_map,
-                           std::vector<double> &inputs,
-                           std::vector<double *> &outputs);
+                           std::vector<su2double> &inputs,
+                           std::vector<su2double *> &outputs);
 
   /*!
    * \brief Get number of loaded ANNs

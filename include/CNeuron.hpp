@@ -11,6 +11,24 @@
 #include <iostream>
 #include <limits>
 
+#if defined(HAVE_OMP)
+using su2double = codi::RealReverseIndexOpenMP;
+#else
+#if defined(CODI_INDEX_TAPE)
+using su2double = codi::RealReverseIndex;
+#else
+using su2double = codi::RealReverse;
+#endif
+#endif
+#elif defined(CODI_FORWARD_TYPE)  // forward mode AD
+#include "codi.hpp"
+using su2double = codi::RealForward;
+
+#else  // primal / direct / no AD
+using su2double = double;
+#endif
+
+
 namespace MLPToolbox {
 class CNeuron {
   /*!
@@ -23,11 +41,11 @@ class CNeuron {
    */
 private:
   unsigned long i_neuron; /*!< Neuron identification number */
-  double output{0},       /*!< Output value of the current neuron */
+  su2double output{0},       /*!< Output value of the current neuron */
       input{0},           /*!< Input value of the current neuron */
       doutput_dinput{0},  /*!< Gradient of output with respect to input */
       bias{0};            /*!< Bias value at current neuron */
-  std::vector<double> doutput_dinputs;
+  std::vector<su2double> doutput_dinputs;
 
 public:
   /*!
@@ -46,37 +64,37 @@ public:
    * \brief Set neuron output value
    * \param[in] input - activation function output value
    */
-  void SetOutput(double input) { output = input; }
+  void SetOutput(su2double input) { output = input; }
 
   /*!
    * \brief Get neuron output value
    * \return Output value
    */
-  double GetOutput() const { return output; }
+  su2double GetOutput() const { return output; }
 
   /*!
    * \brief Set neuron input value
    * \param[in] input - activation function input value
    */
-  void SetInput(double x) { input = x; }
+  void SetInput(su2double x) { input = x; }
 
   /*!
    * \brief Get neuron input value
    * \return input value
    */
-  double GetInput() const { return input; }
+  su2double GetInput() const { return input; }
 
   /*!
    * \brief Set neuron bias
    * \param[in] input - bias value
    */
-  void SetBias(double input) { bias = input; }
+  void SetBias(su2double input) { bias = input; }
 
   /*!
    * \brief Get neuron bias value
    * \return bias value
    */
-  double GetBias() const { return bias; }
+  su2double GetBias() const { return bias; }
 
   /*!
    * \brief Size the derivative of the neuron output wrt MLP inputs.
@@ -88,7 +106,7 @@ public:
    * \brief Set neuron output gradient with respect to its input value
    * \param[in] input - Derivative of activation function with respect to input
    */
-  void SetGradient(std::size_t iInput, double input) {
+  void SetGradient(std::size_t iInput, su2double input) {
     doutput_dinputs[iInput] = input;
   }
 
@@ -96,7 +114,7 @@ public:
    * \brief Get neuron output gradient with respect to input value
    * \return output gradient wrt input value
    */
-  double GetGradient(std::size_t iInput) const {
+  su2double GetGradient(std::size_t iInput) const {
     return doutput_dinputs[iInput];
   }
 };

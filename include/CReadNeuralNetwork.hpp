@@ -13,6 +13,24 @@
 #include <limits>
 #include <vector>
 
+#if defined(HAVE_OMP)
+using su2double = codi::RealReverseIndexOpenMP;
+#else
+#if defined(CODI_INDEX_TAPE)
+using su2double = codi::RealReverseIndex;
+#else
+using su2double = codi::RealReverse;
+#endif
+#endif
+#elif defined(CODI_FORWARD_TYPE)  // forward mode AD
+#include "codi.hpp"
+using su2double = codi::RealForward;
+
+#else  // primal / direct / no AD
+using su2double = double;
+#endif
+
+
 namespace MLPToolbox {
 
 class CReadNeuralNetwork {
@@ -26,15 +44,15 @@ private:
 
   std::vector<unsigned long> n_neurons; /*!<  Neuron count per layer. */
 
-  std::vector<std::vector<std::vector<double>>>
+  std::vector<std::vector<std::vector<su2double>>>
       weights_mat; /*!< Network synapse weights. */
 
-  std::vector<std::vector<double>> biases_mat; /*!< Bias values per neuron. */
+  std::vector<std::vector<su2double>> biases_mat; /*!< Bias values per neuron. */
 
   std::vector<std::string>
       activation_functions; /*!< Activation function per layer. */
 
-  std::vector<std::pair<double, double>>
+  std::vector<std::pair<su2double, su2double>>
       input_norm,  /*!< Input variable normalization values (min, max). */
       output_norm; /*!< Output variable normalization values (min, max). */
 public:
@@ -92,7 +110,7 @@ public:
    * \param[in] jNeuron - Neuron index in subsequent layer.
    * \returns Weight value
    */
-  double GetWeight(std::size_t iLayer, std::size_t iNeuron,
+  su2double GetWeight(std::size_t iLayer, std::size_t iNeuron,
                    std::size_t jNeuron) const {
     return weights_mat[iLayer][iNeuron][jNeuron];
   }
@@ -103,7 +121,7 @@ public:
    * \param[in] iNeuron - Neuron index.
    * \returns Bias value
    */
-  double GetBias(std::size_t iLayer, std::size_t iNeuron) const {
+  su2double GetBias(std::size_t iLayer, std::size_t iNeuron) const {
     return biases_mat[iLayer][iNeuron];
   }
 
@@ -112,7 +130,7 @@ public:
    * \param[in] iInput - Input variable index.
    * \returns Input normalization values (min first, max second)
    */
-  std::pair<double, double> GetInputNorm(std::size_t iInput) const {
+  std::pair<su2double, su2double> GetInputNorm(std::size_t iInput) const {
     return input_norm[iInput];
   }
 
@@ -121,7 +139,7 @@ public:
    * \param[in] iOutput - Input variable index.
    * \returns Output normalization values (min first, max second)
    */
-  std::pair<double, double> GetOutputNorm(std::size_t iOutput) const {
+  std::pair<su2double, su2double> GetOutputNorm(std::size_t iOutput) const {
     return output_norm[iOutput];
   }
 

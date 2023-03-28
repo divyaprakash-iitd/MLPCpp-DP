@@ -16,6 +16,23 @@
 
 #include "CLayer.hpp"
 
+#if defined(HAVE_OMP)
+using su2double = codi::RealReverseIndexOpenMP;
+#else
+#if defined(CODI_INDEX_TAPE)
+using su2double = codi::RealReverseIndex;
+#else
+using su2double = codi::RealReverse;
+#endif
+#endif
+#elif defined(CODI_FORWARD_TYPE)  // forward mode AD
+#include "codi.hpp"
+using su2double = codi::RealForward;
+
+#else  // primal / direct / no AD
+using su2double = double;
+#endif
+
 namespace MLPToolbox {
 class CNeuralNetwork {
   /*!
@@ -43,18 +60,18 @@ private:
 
   // std::vector<su2activematrix> weights_mat; /*!< Weights of synapses
   // connecting layers */
-  std::vector<std::vector<std::vector<double>>> weights_mat;
+  std::vector<std::vector<std::vector<su2double>>> weights_mat;
 
-  std::vector<std::pair<double, double>>
+  std::vector<std::pair<su2double, su2double>>
       input_norm,  /*!< Normalization factors for network inputs */
       output_norm; /*!< Normalization factors for network outputs */
 
-  std::vector<double> last_inputs; /*!< Inputs from previous lookup operation.
+  std::vector<su2double> last_inputs; /*!< Inputs from previous lookup operation.
                                       Evaluation of the network */
   /*!< is skipped if current inputs are the same as the last inputs. */
 
-  double *ANN_outputs; /*!< Pointer to network outputs */
-  std::vector<std::vector<double>>
+  su2double *ANN_outputs; /*!< Pointer to network outputs */
+  std::vector<std::vector<su2double>>
       dOutputs_dInputs; /*!< Network output derivatives w.r.t inputs */
 
   /*!
@@ -130,7 +147,7 @@ public:
    * \param[in] value - weight value.
    */
   void SetWeight(unsigned long i_layer, unsigned long i_neuron,
-                 unsigned long j_neuron, double value) {
+                 unsigned long j_neuron, su2double value) {
     weights_mat[i_layer][j_neuron][i_neuron] = value;
   };
 
@@ -140,7 +157,7 @@ public:
    * \param[in] i_neuron - Neuron index of current layer.
    * \param[in] value - Bias value.
    */
-  void SetBias(unsigned long i_layer, unsigned long i_neuron, double value) {
+  void SetBias(unsigned long i_layer, unsigned long i_neuron, su2double value) {
     total_layers[i_layer]->SetBias(i_neuron, value);
   }
 
@@ -198,7 +215,7 @@ public:
    * \param[in] compute_gradient - Compute the derivatives of the outputs wrt
    * inputs.
    */
-  void Predict(std::vector<double> &inputs, bool compute_gradient = false);
+  void Predict(std::vector<su2double> &inputs, bool compute_gradient = false);
 
   /*!
    * \brief Set the normalization factors for the input layer
@@ -206,7 +223,7 @@ public:
    * \param[in] input_min - Minimum input value.
    * \param[in] input_max - Maximum input value.
    */
-  void SetInputNorm(unsigned long iInput, double input_min, double input_max) {
+  void SetInputNorm(unsigned long iInput, su2double input_min, su2double input_max) {
     input_norm[iInput] = std::make_pair(input_min, input_max);
   }
 
@@ -216,16 +233,16 @@ public:
    * \param[in] input_min - Minimum output value.
    * \param[in] input_max - Maximum output value.
    */
-  void SetOutputNorm(unsigned long iOutput, double output_min,
-                     double output_max) {
+  void SetOutputNorm(unsigned long iOutput, su2double output_min,
+                     su2double output_max) {
     output_norm[iOutput] = std::make_pair(output_min, output_max);
   }
 
-  std::pair<double, double> GetInputNorm(unsigned long iInput) const {
+  std::pair<su2double, su2double> GetInputNorm(unsigned long iInput) const {
     return input_norm[iInput];
   }
 
-  std::pair<double, double> GetOutputNorm(unsigned long iOutput) const {
+  std::pair<su2double, su2double> GetOutputNorm(unsigned long iOutput) const {
     return output_norm[iOutput];
   }
   /*!
@@ -279,7 +296,7 @@ public:
    * \param[in] iOutput - output index.
    * \returns Prediction value.
    */
-  double GetANNOutput(std::size_t iOutput) const {
+  su2double GetANNOutput(std::size_t iOutput) const {
     return ANN_outputs[iOutput];
   }
 
@@ -289,7 +306,7 @@ public:
    * \param[in] iInput - input variable index.
    * \returns Output derivative w.r.t input.
    */
-  double GetdOutputdInput(std::size_t iOutput, std::size_t iInput) const {
+  su2double GetdOutputdInput(std::size_t iOutput, std::size_t iInput) const {
     return dOutputs_dInputs[iOutput][iInput];
   }
 
@@ -308,8 +325,8 @@ public:
    * \param[in] iNeuron - Layer neuron index.
    * \returns Neuron activation function input.
    */
-  double ComputeX(std::size_t iLayer, std::size_t iNeuron) const {
-    double x;
+  su2double ComputeX(std::size_t iLayer, std::size_t iNeuron) const {
+    su2double x;
     x = total_layers[iLayer]->GetBias(iNeuron);
     std::size_t nNeurons_previous = total_layers[iLayer - 1]->GetNNeurons();
     for (std::size_t jNeuron = 0; jNeuron < nNeurons_previous; jNeuron++) {
@@ -318,9 +335,9 @@ public:
     }
     return x;
   }
-  double ComputedOutputdInput(std::size_t iLayer, std::size_t iNeuron,
+  su2double ComputedOutputdInput(std::size_t iLayer, std::size_t iNeuron,
                               std::size_t iInput) const {
-    double doutput_dinput = 0;
+    su2double doutput_dinput = 0;
     for (auto jNeuron = 0u; jNeuron < total_layers[iLayer - 1]->GetNNeurons();
          jNeuron++) {
       doutput_dinput += weights_mat[iLayer - 1][iNeuron][jNeuron] *

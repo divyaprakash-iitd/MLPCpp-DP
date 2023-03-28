@@ -62,7 +62,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \param[in] output_value - Activation function output
    */
-  void SetOutput(std::size_t i_neuron, double value) {
+  void SetOutput(std::size_t i_neuron, su2double value) {
     neurons[i_neuron].SetOutput(value);
   }
 
@@ -71,7 +71,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \return Neuron output value
    */
-  double GetOutput(std::size_t i_neuron) const {
+  su2double GetOutput(std::size_t i_neuron) const {
     return neurons[i_neuron].GetOutput();
   }
 
@@ -80,7 +80,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \param[in] input_value - Activation function input
    */
-  void SetInput(std::size_t i_neuron, double value) {
+  void SetInput(std::size_t i_neuron, su2double value) {
     neurons[i_neuron].SetInput(value);
   }
 
@@ -89,7 +89,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \return Neuron input value
    */
-  double GetInput(std::size_t i_neuron) const {
+  su2double GetInput(std::size_t i_neuron) const {
     return neurons[i_neuron].GetInput();
   }
 
@@ -98,7 +98,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \param[in] bias_value - Bias value
    */
-  void SetBias(std::size_t i_neuron, double value) {
+  void SetBias(std::size_t i_neuron, su2double value) {
     neurons[i_neuron].SetBias(value);
   }
 
@@ -107,7 +107,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \return Neuron bias value
    */
-  double GetBias(std::size_t i_neuron) const {
+  su2double GetBias(std::size_t i_neuron) const {
     return neurons[i_neuron].GetBias();
   }
 
@@ -116,7 +116,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \return Gradient of neuron output wrt input
    */
-  double GetdYdX(std::size_t i_neuron, std::size_t iInput) const {
+  su2double GetdYdX(std::size_t i_neuron, std::size_t iInput) const {
     return neurons[i_neuron].GetGradient(iInput);
   }
 
@@ -125,7 +125,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \return Gradient of neuron output wrt input
    */
-  void SetdYdX(std::size_t i_neuron, std::size_t iInput, double dy_dx) {
+  void SetdYdX(std::size_t i_neuron, std::size_t iInput, su2double dy_dx) {
     neurons[i_neuron].SetGradient(iInput, dy_dx);
   }
 

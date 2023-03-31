@@ -32,13 +32,25 @@ private:
   std::string activation_type;     /*!< Activation function type applied to the
                                       current layer*/
 public:
-  CLayer();
-  CLayer(unsigned long n_neurons);
+  CLayer() : CLayer(1) {}
+  CLayer(unsigned long n_neurons) : number_of_neurons{n_neurons}, is_input{false} {
+    neurons.resize(n_neurons);
+    for (size_t i = 0; i < number_of_neurons; i++) {
+      neurons[i].SetNumber(i + 1);
+    }
+  }
   /*!
    * \brief Set current layer neuron count
    * \param[in] n_neurons - Number of neurons in this layer
    */
-  void SetNNeurons(unsigned long n_neurons);
+  void SetNNeurons(unsigned long n_neurons) {
+    if (number_of_neurons != n_neurons) {
+      neurons.resize(n_neurons);
+      for (size_t i = 0; i < number_of_neurons; i++) {
+        neurons[i].SetNumber(i + 1);
+      }
+    }
+  }
 
   /*!
    * \brief Get the current layer neuron count
@@ -63,7 +75,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \param[in] output_value - Activation function output
    */
-  void SetOutput(std::size_t i_neuron, su2double value) {
+  void SetOutput(std::size_t i_neuron, mlpdouble value) {
     neurons[i_neuron].SetOutput(value);
   }
 
@@ -72,7 +84,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \return Neuron output value
    */
-  su2double GetOutput(std::size_t i_neuron) const {
+  mlpdouble GetOutput(std::size_t i_neuron) const {
     return neurons[i_neuron].GetOutput();
   }
 
@@ -81,7 +93,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \param[in] input_value - Activation function input
    */
-  void SetInput(std::size_t i_neuron, su2double value) {
+  void SetInput(std::size_t i_neuron, mlpdouble value) {
     neurons[i_neuron].SetInput(value);
   }
 
@@ -90,7 +102,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \return Neuron input value
    */
-  su2double GetInput(std::size_t i_neuron) const {
+  mlpdouble GetInput(std::size_t i_neuron) const {
     return neurons[i_neuron].GetInput();
   }
 
@@ -99,7 +111,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \param[in] bias_value - Bias value
    */
-  void SetBias(std::size_t i_neuron, su2double value) {
+  void SetBias(std::size_t i_neuron, mlpdouble value) {
     neurons[i_neuron].SetBias(value);
   }
 
@@ -108,7 +120,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \return Neuron bias value
    */
-  su2double GetBias(std::size_t i_neuron) const {
+  mlpdouble GetBias(std::size_t i_neuron) const {
     return neurons[i_neuron].GetBias();
   }
 
@@ -117,7 +129,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \return Gradient of neuron output wrt input
    */
-  su2double GetdYdX(std::size_t i_neuron, std::size_t iInput) const {
+  mlpdouble GetdYdX(std::size_t i_neuron, std::size_t iInput) const {
     return neurons[i_neuron].GetGradient(iInput);
   }
 
@@ -126,7 +138,7 @@ public:
    * \param[in] i_neuron - Neuron index
    * \return Gradient of neuron output wrt input
    */
-  void SetdYdX(std::size_t i_neuron, std::size_t iInput, su2double dy_dx) {
+  void SetdYdX(std::size_t i_neuron, std::size_t iInput, mlpdouble dy_dx) {
     neurons[i_neuron].SetGradient(iInput, dy_dx);
   }
 

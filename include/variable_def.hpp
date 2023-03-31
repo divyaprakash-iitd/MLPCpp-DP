@@ -3,18 +3,18 @@
 #include "codi/tools/data/externalFunctionUserData.hpp"
 
 #if defined(HAVE_OMP)
-using su2double = codi::RealReverseIndexOpenMP;
+using mlpdouble = codi::RealReverseIndexOpenMP;
 #else
 #if defined(CODI_INDEX_TAPE)
-using su2double = codi::RealReverseIndex;
+using mlpdouble = codi::RealReverseIndex;
 #else
-using su2double = codi::RealReverse;
+using mlpdouble = codi::RealReverse;
 #endif
 #endif
 #elif defined(CODI_FORWARD_TYPE)  // forward mode AD
 #include "codi.hpp"
-using su2double = codi::RealForward;
+using mlpdouble = codi::RealForward;
 
 #else  // primal / direct / no AD
-using su2double = double;
+using mlpdouble = double;
 #endif

@@ -24,11 +24,11 @@ class CNeuron {
    */
 private:
   unsigned long i_neuron; /*!< Neuron identification number */
-  su2double output{0},       /*!< Output value of the current neuron */
+  mlpdouble output{0},       /*!< Output value of the current neuron */
       input{0},           /*!< Input value of the current neuron */
       doutput_dinput{0},  /*!< Gradient of output with respect to input */
       bias{0};            /*!< Bias value at current neuron */
-  std::vector<su2double> doutput_dinputs;
+  std::vector<mlpdouble> doutput_dinputs;
 
 public:
   /*!
@@ -47,37 +47,37 @@ public:
    * \brief Set neuron output value
    * \param[in] input - activation function output value
    */
-  void SetOutput(su2double input) { output = input; }
+  void SetOutput(mlpdouble input) { output = input; }
 
   /*!
    * \brief Get neuron output value
    * \return Output value
    */
-  su2double GetOutput() const { return output; }
+  mlpdouble GetOutput() const { return output; }
 
   /*!
    * \brief Set neuron input value
    * \param[in] input - activation function input value
    */
-  void SetInput(su2double x) { input = x; }
+  void SetInput(mlpdouble x) { input = x; }
 
   /*!
    * \brief Get neuron input value
    * \return input value
    */
-  su2double GetInput() const { return input; }
+  mlpdouble GetInput() const { return input; }
 
   /*!
    * \brief Set neuron bias
    * \param[in] input - bias value
    */
-  void SetBias(su2double input) { bias = input; }
+  void SetBias(mlpdouble input) { bias = input; }
 
   /*!
    * \brief Get neuron bias value
    * \return bias value
    */
-  su2double GetBias() const { return bias; }
+  mlpdouble GetBias() const { return bias; }
 
   /*!
    * \brief Size the derivative of the neuron output wrt MLP inputs.
@@ -89,7 +89,7 @@ public:
    * \brief Set neuron output gradient with respect to its input value
    * \param[in] input - Derivative of activation function with respect to input
    */
-  void SetGradient(std::size_t iInput, su2double input) {
+  void SetGradient(std::size_t iInput, mlpdouble input) {
     doutput_dinputs[iInput] = input;
   }
 
@@ -97,7 +97,7 @@ public:
    * \brief Get neuron output gradient with respect to input value
    * \return output gradient wrt input value
    */
-  su2double GetGradient(std::size_t iInput) const {
+  mlpdouble GetGradient(std::size_t iInput) const {
     return doutput_dinputs[iInput];
   }
 };

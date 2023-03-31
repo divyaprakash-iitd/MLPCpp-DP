@@ -8,10 +8,6 @@ set(app_name ${project_name})
 project(${project_name})
 
 # Adding source code directories
-file(GLOB APP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 set(APP_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 include_directories(${APP_INCLUDE_DIRS})
-
-# Define MLPCpp as a library
-add_library(${app_name} STATIC ${APP_SOURCES} "")

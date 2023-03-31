@@ -54,15 +54,15 @@ std::vector<pair<size_t, size_t>> MLPToolbox::CLookUp_ANN::FindVariableIndices(
 
 unsigned long
 MLPToolbox::CLookUp_ANN::PredictANN(CIOMap *input_output_map,
-                                    std::vector<su2double> &inputs,
-                                    std::vector<su2double *> &outputs) {
+                                    std::vector<mlpdouble> &inputs,
+                                    std::vector<mlpdouble *> &outputs) {
   /*--- Evaluate MLP based on target input and output variables ---*/
   bool within_range,             // Within MLP training set range.
       MLP_was_evaluated = false; // MLP was evaluated within training set range.
 
   /* If queries lie outside the training data set, the nearest MLP will be
    * evaluated through extrapolation. */
-  su2double distance_to_query = 1e20; // Overall smallest distance between training
+  mlpdouble distance_to_query = 1e20; // Overall smallest distance between training
                                    // data set middle and query.
   size_t i_ANN_nearest = 0,        // Index of nearest MLP.
       i_map_nearest = 0;           // Index of nearest iomap index.
@@ -72,7 +72,7 @@ MLPToolbox::CLookUp_ANN::PredictANN(CIOMap *input_output_map,
     auto i_ANN = input_output_map->GetMLPIndex(i_map);
     auto ANN_inputs = input_output_map->GetMLPInputs(i_map, inputs);
 
-    su2double distance_to_query_i = 0;
+    mlpdouble distance_to_query_i = 0;
     for (auto i_input = 0u; i_input < ANN_inputs.size(); i_input++) {
       auto ANN_input_limits = NeuralNetworks[i_ANN].GetInputNorm(i_input);
 
@@ -83,7 +83,7 @@ MLPToolbox::CLookUp_ANN::PredictANN(CIOMap *input_output_map,
       }
 
       /* Calculate distance between MLP training range center point and query */
-      su2double middle = 0.5 * (ANN_input_limits.second + ANN_input_limits.first);
+      mlpdouble middle = 0.5 * (ANN_input_limits.second + ANN_input_limits.first);
       distance_to_query_i +=
           pow((ANN_inputs[i_input] - middle) /
                   (ANN_input_limits.second - ANN_input_limits.first),

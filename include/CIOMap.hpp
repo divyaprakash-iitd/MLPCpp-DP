@@ -13,10 +13,10 @@
 #include <string>
 #include <vector>
 #include "variable_def.hpp"
+#include "CLookUp_ANN.hpp"
 
 namespace MLPToolbox {
 
-class CLookUp_ANN;
 
 class CIOMap
 /*!

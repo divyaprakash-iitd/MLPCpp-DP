@@ -10,12 +10,14 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
 #include <limits>
 #include <string>
 #include <vector>
 
 #include "CIOMap.hpp"
 #include "CNeuralNetwork.hpp"
+#include "CReadNeuralNetwork.hpp"
 #include "variable_def.hpp"
 
 namespace MLPToolbox {
@@ -215,7 +217,7 @@ public:
                          CIOMap *input_output_map) const {
     /*--- Check wether all output variables are in the loaded MLPs ---*/
 
-    std::vector<string> missing_outputs;
+    std::vector<std::string> missing_outputs;
     bool outputs_are_present{true};
     /* Looping over the target outputs */
     for (auto iOutput = 0u; iOutput < output_names.size(); iOutput++) {
@@ -238,7 +240,7 @@ public:
     }
     /*--- Raise error if any outputs are missing ---*/
     if (missing_outputs.size() > 0) {
-      string message{"Outputs "};
+      std::string message{"Outputs "};
       for (size_t iVar = 0; iVar < missing_outputs.size(); iVar++)
         message += missing_outputs[iVar] + " ";
       throw std::invalid_argument(message + "are not present in any loaded ANN.");
@@ -254,7 +256,7 @@ public:
   bool CheckUseOfInputs(std::vector<std::string> &input_names,
                         CIOMap *input_output_map) const {
     /*--- Check wether all input variables are in the loaded MLPs ---*/
-    std::vector<string> missing_inputs;
+    std::vector<std::string> missing_inputs;
     bool inputs_are_present{true};
     for (auto iInput = 0u; iInput < input_names.size(); iInput++) {
       bool found_input = false;
@@ -273,7 +275,7 @@ public:
     }
     /*--- Raise error if input variables are missing ---*/
     if (missing_inputs.size() > 0) {
-      string message{"Inputs "};
+      std::string message{"Inputs "};
       for (size_t iVar = 0; iVar < missing_inputs.size(); iVar++)
         message += missing_inputs[iVar] + " ";
       throw std::invalid_argument(message + "are not present in any loaded ANN.");
@@ -294,16 +296,16 @@ public:
     /*--- Find loaded MLPs that have the same input variable names as the
     * variables listed in variable_names ---*/
 
-    std::vector<pair<size_t, size_t>> variable_indices;
+    std::vector<std::pair<size_t, size_t>> variable_indices;
     auto nVar = input ? NeuralNetworks[i_ANN].GetnInputs()
                       : NeuralNetworks[i_ANN].GetnOutputs();
 
     for (auto iVar = 0u; iVar < nVar; iVar++) {
       for (auto jVar = 0u; jVar < variable_names.size(); jVar++) {
-        string ANN_varname = input ? NeuralNetworks[i_ANN].GetInputName(iVar)
+        std::string ANN_varname = input ? NeuralNetworks[i_ANN].GetInputName(iVar)
                                   : NeuralNetworks[i_ANN].GetOutputName(iVar);
         if (variable_names[jVar].compare(ANN_varname) == 0) {
-          variable_indices.push_back(make_pair(jVar, iVar));
+          variable_indices.push_back(std::make_pair(jVar, iVar));
         }
       }
     }
@@ -316,14 +318,14 @@ public:
   void DisplayNetworkInfo() const {
     /*--- Display network information on the loaded MLPs ---*/
 
-    std::cout << setfill(' ');
-    std::cout << endl;
+    std::cout << std::setfill(' ');
+    std::cout << std::endl;
     std::cout << "+------------------------------------------------------------------+"
             "\n";
     std::cout << "|                 Multi-Layer Perceptron (MLP) info                "
             "|\n";
     std::cout << "+------------------------------------------------------------------+"
-        << endl;
+        << std::endl;
 
     /* For every loaded MLP, display the inputs, outputs, activation functions,
     * and architecture. */

@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
 #include <limits>
 #include <vector>
 #include "variable_def.hpp"
@@ -52,13 +53,13 @@ public:
    * \brief Read input file and store necessary information
    */
   void ReadMLPFile() {
-    ifstream file_stream;
-    file_stream.open(filename.c_str(), ifstream::in);
+    std::ifstream file_stream;
+    file_stream.open(filename.c_str(), std::ifstream::in);
     if (!file_stream.is_open()) {
       throw std::invalid_argument("There is no MLP file called " + filename);
     }
 
-    string line, word;
+    std::string line, word;
     bool eoHeader = false, found_layercount = false, found_input_names = false,
         found_output_names = false;
 
@@ -103,12 +104,12 @@ public:
         /* Size input and output normalization and set default values */
         input_norm.resize(n_neurons[0]);
         for (auto iNeuron = 0u; iNeuron < n_neurons[0]; iNeuron++)
-          input_norm[iNeuron] = make_pair(0, 1);
+          input_norm[iNeuron] = std::make_pair(0, 1);
 
         output_norm.resize(n_neurons[n_neurons.size() - 1]);
         for (auto iNeuron = 0u; iNeuron < n_neurons[n_neurons.size() - 1];
             iNeuron++)
-          output_norm[iNeuron] = make_pair(0, 1);
+          output_norm[iNeuron] = std::make_pair(0, 1);
       }
 
       /* Read layer activation function types */
@@ -119,7 +120,7 @@ public:
         }
         for (auto iLayer = 0u; iLayer < n_layers; iLayer++) {
           getline(file_stream, line);
-          istringstream activation_stream(line);
+          std::istringstream activation_stream(line);
           activation_stream >> word;
           activation_functions[iLayer] = word;
         }
@@ -141,12 +142,12 @@ public:
         for (auto iInput = 0u; iInput < input_norm.size(); iInput++) {
           getline(file_stream, line);
           if (line.compare("") != 0) {
-            istringstream input_norm_stream(line);
+            std::istringstream input_norm_stream(line);
             input_norm_stream >> word;
             mlpdouble input_min = stold(word);
             input_norm_stream >> word;
             mlpdouble input_max = stold(word);
-            input_norm[iInput] = make_pair(input_min, input_max);
+            input_norm[iInput] = std::make_pair(input_min, input_max);
           }
         }
       }
@@ -173,12 +174,12 @@ public:
         for (auto iOutput = 0u; iOutput < output_norm.size(); iOutput++) {
           getline(file_stream, line);
           if (line.compare("") != 0) {
-            istringstream output_norm_stream(line);
+            std::istringstream output_norm_stream(line);
             output_norm_stream >> word;
             mlpdouble output_min = stold(word);
             output_norm_stream >> word;
             mlpdouble output_max = stold(word);
-            output_norm[iOutput] = make_pair(output_min, output_max);
+            output_norm[iOutput] = std::make_pair(output_min, output_max);
           }
         }
       }
@@ -202,7 +203,7 @@ public:
       getline(file_stream, line);
       for (auto iNeuron = 0u; iNeuron < n_neurons[iLayer]; iNeuron++) {
         getline(file_stream, line);
-        istringstream weight_stream(line);
+        std::istringstream weight_stream(line);
         for (auto jNeuron = 0u; jNeuron < n_neurons[iLayer + 1]; jNeuron++) {
           weight_stream >> word;
           weights_mat[iLayer][iNeuron][jNeuron] = stold(word);
@@ -215,7 +216,7 @@ public:
     line = SkipToFlag(&file_stream, "[biases per layer]");
     for (auto iLayer = 0u; iLayer < n_layers; iLayer++) {
       getline(file_stream, line);
-      istringstream bias_stream(line);
+      std::istringstream bias_stream(line);
       for (auto iNeuron = 0u; iNeuron < n_neurons[iLayer]; iNeuron++) {
         bias_stream >> word;
         biases_mat[iLayer][iNeuron] = stold(word);
@@ -232,7 +233,7 @@ public:
   std::string SkipToFlag(std::ifstream *file_stream, std::string flag) {
     /*--- Search file for a line and set it as the current line in the file stream
     * ---*/
-    string line;
+    std::string line;
     getline(*file_stream, line);
 
     while (line.compare(flag) != 0 && !(*file_stream).eof()) {
@@ -240,7 +241,7 @@ public:
     }
 
     if ((*file_stream).eof())
-      cout << "line not in file!" << endl;
+      std::cout << "line not in file!" << std::endl;
 
     return line;
   }

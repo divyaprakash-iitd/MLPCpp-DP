@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <iomanip>
 #include <limits>
 #include <map>
 
@@ -190,65 +191,65 @@ public:
     int column_width = int(display_width / 3.0) - 1;
 
     /*--- Input layer information ---*/
-    cout << "+" << setfill('-') << setw(display_width) << right << "+" << endl;
-    cout << setfill(' ');
-    cout << "|" << left << setw(display_width - 1) << "Input Layer Information:"
-        << "|" << endl;
-    cout << "+" << setfill('-') << setw(display_width) << right << "+" << endl;
-    cout << setfill(' ');
-    cout << "|" << left << setw(column_width) << "Input Variable:"
-        << "|" << left << setw(column_width) << "Lower limit:"
-        << "|" << left << setw(column_width) << "Upper limit:"
-        << "|" << endl;
-    cout << "+" << setfill('-') << setw(display_width) << right << "+" << endl;
-    cout << setfill(' ');
+    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << std::setfill(' ');
+    std::cout << "|" << std::left << std::setw(display_width - 1) << "Input Layer Information:"
+        << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << std::setfill(' ');
+    std::cout << "|" << std::left << std::setw(column_width) << "Input Variable:"
+        << "|" << std::left << std::setw(column_width) << "Lower limit:"
+        << "|" << std::left << std::setw(column_width) << "Upper limit:"
+        << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << std::setfill(' ');
 
     /*--- Hidden layer information ---*/
     for (auto iInput = 0u; iInput < inputLayer->GetNNeurons(); iInput++)
-      cout << "|" << left << setw(column_width)
-          << to_string(iInput + 1) + ": " + input_names[iInput] << "|" << right
-          << setw(column_width) << input_norm[iInput].first << "|" << right
-          << setw(column_width) << input_norm[iInput].second << "|" << endl;
-    cout << "+" << setfill('-') << setw(display_width) << right << "+" << endl;
-    cout << setfill(' ');
-    cout << "|" << left << setw(display_width - 1) << "Hidden Layers Information:"
-        << "|" << endl;
-    cout << "+" << setfill('-') << setw(display_width) << right << "+" << endl;
-    cout << setfill(' ');
-    cout << "|" << setw(column_width) << left << "Layer index"
-        << "|" << setw(column_width) << left << "Neuron count"
-        << "|" << setw(column_width) << left << "Function"
-        << "|" << endl;
-    cout << "+" << setfill('-') << setw(display_width) << right << "+" << endl;
-    cout << setfill(' ');
+      std::cout << "|" << std::left << std::setw(column_width)
+          << std::to_string(iInput + 1) + ": " + input_names[iInput] << "|" << std::right
+          << std::setw(column_width) << input_norm[iInput].first << "|" << std::right
+          << std::setw(column_width) << input_norm[iInput].second << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << std::setfill(' ');
+    std::cout << "|" << std::left << std::setw(display_width - 1) << "Hidden Layers Information:"
+        << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << std::setfill(' ');
+    std::cout << "|" << std::setw(column_width) << std::left << "Layer index"
+        << "|" << std::setw(column_width) << std::left << "Neuron count"
+        << "|" << std::setw(column_width) << std::left << "Function"
+        << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << std::setfill(' ');
     for (auto iLayer = 0u; iLayer < n_hidden_layers; iLayer++)
-      cout << "|" << setw(column_width) << right << iLayer + 1 << "|"
-          << setw(column_width) << right << hiddenLayers[iLayer]->GetNNeurons()
-          << "|" << setw(column_width) << right
-          << activation_function_names[iLayer + 1] << "|" << endl;
-    cout << "+" << setfill('-') << setw(display_width) << right << "+" << endl;
-    cout << setfill(' ');
+      std::cout << "|" << std::setw(column_width) << std::right << iLayer + 1 << "|"
+          << std::setw(column_width) << std::right << hiddenLayers[iLayer]->GetNNeurons()
+          << "|" << std::setw(column_width) << std::right
+          << activation_function_names[iLayer + 1] << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << std::setfill(' ');
 
     /*--- Output layer information ---*/
-    cout << "|" << left << setw(display_width - 1) << "Output Layer Information:"
-        << "|" << endl;
-    cout << "+" << setfill('-') << setw(display_width) << right << "+" << endl;
-    cout << setfill(' ');
-    cout << "|" << left << setw(column_width) << "Output Variable:"
-        << "|" << left << setw(column_width) << "Lower limit:"
-        << "|" << left << setw(column_width) << "Upper limit:"
-        << "|" << endl;
-    cout << "+" << setfill('-') << setw(display_width) << right << "+" << endl;
-    cout << setfill(' ');
+    std::cout << "|" << std::left << std::setw(display_width - 1) << "Output Layer Information:"
+        << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << std::setfill(' ');
+    std::cout << "|" << std::left << std::setw(column_width) << "Output Variable:"
+        << "|" << std::left << std::setw(column_width) << "Lower limit:"
+        << "|" << std::left << std::setw(column_width) << "Upper limit:"
+        << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << std::setfill(' ');
     for (auto iOutput = 0u; iOutput < outputLayer->GetNNeurons(); iOutput++)
-      cout << "|" << left << setw(column_width)
-          << to_string(iOutput + 1) + ": " + output_names[iOutput] << "|"
-          << right << setw(column_width) << output_norm[iOutput].first << "|"
-          << right << setw(column_width) << output_norm[iOutput].second << "|"
-          << endl;
-    cout << "+" << setfill('-') << setw(display_width) << right << "+" << endl;
-    cout << setfill(' ');
-    cout << endl;
+      std::cout << "|" << std::left << std::setw(column_width)
+          << std::to_string(iOutput + 1) + ": " + output_names[iOutput] << "|"
+          << std::right << std::setw(column_width) << output_norm[iOutput].first << "|"
+          << std::right << std::setw(column_width) << output_norm[iOutput].second << "|"
+          << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << std::setfill(' ');
+    std::cout << std::endl;
   }
 
   /*!

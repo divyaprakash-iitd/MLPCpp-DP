@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <limits>
+#include <vector>
 #include "variable_def.hpp"
 
 namespace MLPToolbox {

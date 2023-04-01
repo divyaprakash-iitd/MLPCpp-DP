@@ -9,8 +9,8 @@
 
 #include <cmath>
 #include <cstdlib>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <limits>
 #include <string>
 #include <vector>
@@ -75,9 +75,10 @@ private:
     ANN.SizeActivationFunctions(ANN.GetNWeightLayers() + 1);
     for (auto i_layer = 0u; i_layer < ANN.GetNWeightLayers(); i_layer++) {
       ANN.SetActivationFunction(i_layer, Reader.GetActivationFunction(i_layer));
-      for (auto i_neuron = 0u; i_neuron < ANN.GetNNeurons(i_layer); i_neuron++) {
+      for (auto i_neuron = 0u; i_neuron < ANN.GetNNeurons(i_layer);
+           i_neuron++) {
         for (auto j_neuron = 0u; j_neuron < ANN.GetNNeurons(i_layer + 1);
-            j_neuron++) {
+             j_neuron++) {
           ANN.SetWeight(i_layer, i_neuron, j_neuron,
                         Reader.GetWeight(i_layer, i_neuron, j_neuron));
         }
@@ -89,7 +90,8 @@ private:
 
     /* Set neuron biases */
     for (auto i_layer = 0u; i_layer < ANN.GetNWeightLayers() + 1; i_layer++) {
-      for (auto i_neuron = 0u; i_neuron < ANN.GetNNeurons(i_layer); i_neuron++) {
+      for (auto i_neuron = 0u; i_neuron < ANN.GetNNeurons(i_layer);
+           i_neuron++) {
         ANN.SetBias(i_layer, i_neuron, Reader.GetBias(i_layer, i_neuron));
       }
     }
@@ -97,7 +99,7 @@ private:
     /* Define input and output layer normalization values */
     for (auto iInput = 0u; iInput < Reader.GetNInputs(); iInput++) {
       ANN.SetInputNorm(iInput, Reader.GetInputNorm(iInput).first,
-                      Reader.GetInputNorm(iInput).second);
+                       Reader.GetInputNorm(iInput).second);
     }
     for (auto iOutput = 0u; iOutput < Reader.GetNOutputs(); iOutput++) {
       ANN.SetOutputNorm(iOutput, Reader.GetOutputNorm(iOutput).first,
@@ -130,19 +132,20 @@ public:
    * outputs to loaded ANNs \param[in] inputs - input values \param[in] outputs
    * - pointers to output variables \returns Within output normalization range.
    */
-  unsigned long PredictANN(CIOMap *input_output_map,
+  unsigned long PredictANN(MLPToolbox::CIOMap *input_output_map,
                            std::vector<mlpdouble> &inputs,
                            std::vector<mlpdouble *> &outputs) {
     /*--- Evaluate MLP based on target input and output variables ---*/
-    bool within_range,             // Within MLP training set range.
-        MLP_was_evaluated = false; // MLP was evaluated within training set range.
+    bool within_range, // Within MLP training set range.
+        MLP_was_evaluated =
+            false; // MLP was evaluated within training set range.
 
     /* If queries lie outside the training data set, the nearest MLP will be
-    * evaluated through extrapolation. */
-    mlpdouble distance_to_query = 1e20; // Overall smallest distance between training
-                                    // data set middle and query.
-    size_t i_ANN_nearest = 0,        // Index of nearest MLP.
-        i_map_nearest = 0;           // Index of nearest iomap index.
+     * evaluated through extrapolation. */
+    mlpdouble distance_to_query = 1e20; // Overall smallest distance between
+                                        // training data set middle and query.
+    size_t i_ANN_nearest = 0, // Index of nearest MLP.
+        i_map_nearest = 0;    // Index of nearest iomap index.
 
     for (auto i_map = 0u; i_map < input_output_map->GetNMLPs(); i_map++) {
       within_range = true;
@@ -159,8 +162,10 @@ public:
           within_range = false;
         }
 
-        /* Calculate distance between MLP training range center point and query */
-        mlpdouble middle = 0.5 * (ANN_input_limits.second + ANN_input_limits.first);
+        /* Calculate distance between MLP training range center point and query
+         */
+        mlpdouble middle =
+            0.5 * (ANN_input_limits.second + ANN_input_limits.first);
         distance_to_query_i +=
             pow((ANN_inputs[i_input] - middle) /
                     (ANN_input_limits.second - ANN_input_limits.first),
@@ -191,15 +196,58 @@ public:
       auto ANN_inputs = input_output_map->GetMLPInputs(i_map_nearest, inputs);
       NeuralNetworks[i_ANN_nearest].Predict(ANN_inputs);
       for (auto i = 0u; i < input_output_map->GetNMappedOutputs(i_map_nearest);
-          i++) {
+           i++) {
         *outputs[input_output_map->GetOutputIndex(i_map_nearest, i)] =
             NeuralNetworks[i_ANN_nearest].GetANNOutput(
                 input_output_map->GetMLPOutputIndex(i_map_nearest, i));
       }
     }
 
-    /* Return 1 if query data lies outside the range of any of the loaded MLPs */
+    /* Return 1 if query data lies outside the range of any of the loaded MLPs
+     */
     return MLP_was_evaluated ? 0 : 1;
+  }
+
+  /*!
+  * \brief Pair inputs and outputs with look-up operations.
+  * \param[in] ioMap - input-output map to pair variables with.
+  */
+  void PairVariableswithMLPs(MLPToolbox::CIOMap &ioMap) {
+    /*
+    In this function, the call inputs and outputs are matched to those within
+    the MLP collection.
+    */
+    bool isInput, isOutput;
+
+    auto inputVariables = ioMap.GetInputVars();
+    auto outputVariables = ioMap.GetOutputVars();
+    // Looping over the loaded MLPs to check wether the MLP inputs match with
+    // the call inputs
+    for (size_t iMLP = 0; iMLP < NeuralNetworks.size(); iMLP++) {
+      // Mapped call inputs to MLP inputs
+      std::vector<std::pair<size_t, size_t>> Input_Indices =
+          FindVariableIndices(iMLP, inputVariables, true);
+      isInput = Input_Indices.size() > 0;
+
+      if (isInput) {
+        // Only when the MLP inputs match with a portion of the call inputs are
+        // the output variable checks performed
+
+        std::vector<std::pair<size_t, size_t>> Output_Indices =
+            FindVariableIndices(iMLP, outputVariables, false);
+        isOutput = Output_Indices.size() > 0;
+
+        if (isOutput) {
+          // Update input and output mapping if both inputs and outputs match
+          ioMap.PushMLPIndex(iMLP);
+          ioMap.PushInputIndices(Input_Indices);
+          ioMap.PushOutputIndices(Output_Indices);
+        }
+      }
+    }
+
+    CheckUseOfInputs(ioMap);
+    CheckUseOfOutputs(ioMap);
   }
 
   /*!
@@ -213,10 +261,9 @@ public:
    * \param[in] output_names - output variable names to check
    * \param[in] input_output_map - pointer to input-output map to be checked
    */
-  bool CheckUseOfOutputs(std::vector<std::string> &output_names,
-                         CIOMap *input_output_map) const {
+  bool CheckUseOfOutputs(MLPToolbox::CIOMap &input_output_map) const {
     /*--- Check wether all output variables are in the loaded MLPs ---*/
-
+    auto output_names = input_output_map.GetOutputVars();
     std::vector<std::string> missing_outputs;
     bool outputs_are_present{true};
     /* Looping over the target outputs */
@@ -224,8 +271,8 @@ public:
       bool found_output{false};
 
       /* Looping over all the selected ANNs */
-      for (auto i_map = 0u; i_map < input_output_map->GetNMLPs(); i_map++) {
-        auto output_map = input_output_map->GetOutputMapping(i_map);
+      for (auto i_map = 0u; i_map < input_output_map.GetNMLPs(); i_map++) {
+        auto output_map = input_output_map.GetOutputMapping(i_map);
 
         /* Looping over the outputs of the output map of the current ANN */
         for (auto jOutput = 0u; jOutput < output_map.size(); jOutput++) {
@@ -243,7 +290,8 @@ public:
       std::string message{"Outputs "};
       for (size_t iVar = 0; iVar < missing_outputs.size(); iVar++)
         message += missing_outputs[iVar] + " ";
-      throw std::invalid_argument(message + "are not present in any loaded ANN.");
+      throw std::invalid_argument(message +
+                                  "are not present in any loaded ANN.");
     }
     return outputs_are_present;
   }
@@ -253,15 +301,15 @@ public:
    * \param[in] input_names - input variable names to check
    * \param[in] input_output_map - pointer to input-output map to be checked
    */
-  bool CheckUseOfInputs(std::vector<std::string> &input_names,
-                        CIOMap *input_output_map) const {
+  bool CheckUseOfInputs(MLPToolbox::CIOMap &input_output_map) const {
     /*--- Check wether all input variables are in the loaded MLPs ---*/
+    auto input_names = input_output_map.GetInputVars();
     std::vector<std::string> missing_inputs;
     bool inputs_are_present{true};
     for (auto iInput = 0u; iInput < input_names.size(); iInput++) {
       bool found_input = false;
-      for (auto i_map = 0u; i_map < input_output_map->GetNMLPs(); i_map++) {
-        auto input_map = input_output_map->GetInputMapping(i_map);
+      for (auto i_map = 0u; i_map < input_output_map.GetNMLPs(); i_map++) {
+        auto input_map = input_output_map.GetInputMapping(i_map);
         for (auto jInput = 0u; jInput < input_map.size(); jInput++) {
           if (input_map[jInput].first == iInput) {
             found_input = true;
@@ -278,7 +326,8 @@ public:
       std::string message{"Inputs "};
       for (size_t iVar = 0; iVar < missing_inputs.size(); iVar++)
         message += missing_inputs[iVar] + " ";
-      throw std::invalid_argument(message + "are not present in any loaded ANN.");
+      throw std::invalid_argument(message +
+                                  "are not present in any loaded ANN.");
     }
     return inputs_are_present;
   }
@@ -294,7 +343,7 @@ public:
                       std::vector<std::string> variable_names,
                       bool input) const {
     /*--- Find loaded MLPs that have the same input variable names as the
-    * variables listed in variable_names ---*/
+     * variables listed in variable_names ---*/
 
     std::vector<std::pair<size_t, size_t>> variable_indices;
     auto nVar = input ? NeuralNetworks[i_ANN].GetnInputs()
@@ -302,8 +351,9 @@ public:
 
     for (auto iVar = 0u; iVar < nVar; iVar++) {
       for (auto jVar = 0u; jVar < variable_names.size(); jVar++) {
-        std::string ANN_varname = input ? NeuralNetworks[i_ANN].GetInputName(iVar)
-                                  : NeuralNetworks[i_ANN].GetOutputName(iVar);
+        std::string ANN_varname =
+            input ? NeuralNetworks[i_ANN].GetInputName(iVar)
+                  : NeuralNetworks[i_ANN].GetOutputName(iVar);
         if (variable_names[jVar].compare(ANN_varname) == 0) {
           variable_indices.push_back(std::make_pair(jVar, iVar));
         }
@@ -320,15 +370,18 @@ public:
 
     std::cout << std::setfill(' ');
     std::cout << std::endl;
-    std::cout << "+------------------------------------------------------------------+"
-            "\n";
-    std::cout << "|                 Multi-Layer Perceptron (MLP) info                "
-            "|\n";
-    std::cout << "+------------------------------------------------------------------+"
-        << std::endl;
+    std::cout << "+------------------------------------------------------------"
+                 "------+"
+                 "\n";
+    std::cout
+        << "|                 Multi-Layer Perceptron (MLP) info                "
+           "|\n";
+    std::cout << "+------------------------------------------------------------"
+                 "------+"
+              << std::endl;
 
     /* For every loaded MLP, display the inputs, outputs, activation functions,
-    * and architecture. */
+     * and architecture. */
     for (auto i_MLP = 0u; i_MLP < NeuralNetworks.size(); i_MLP++) {
       NeuralNetworks[i_MLP].DisplayNetwork();
     }

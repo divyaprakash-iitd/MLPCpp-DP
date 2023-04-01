@@ -1,23 +1,7 @@
-/*!
- * \file CIOMap.hpp
- * \brief Declaration of input-to-output mapping class for artifical neural
- * networks \author E.C.Bunschoten \version 1.0.0
- */
-
-#pragma once
-
-#include <cmath>
-#include <cstdlib>
-#include <iostream>
-#include <limits>
+#include "variable_def.hpp"
 #include <string>
 #include <vector>
-#include "variable_def.hpp"
-#include "CLookUp_ANN.hpp"
-
 namespace MLPToolbox {
-
-
 class CIOMap
 /*!
  *\class CIOMap
@@ -57,90 +41,72 @@ class CIOMap
  *
  * \author E.Bunschoten
  */
-
 {
 private:
-  std::vector<std::size_t> MLP_indices; /*!< Loaded MLP index */
+  std::vector<std::string> inputVariables, /*!< Input variable names for the
+                                              current input-output map. */
+      outputVariables; /*!< Output variable names for the current input-output
+                          map. */
 
+  std::vector<std::size_t> MLP_indices; /*!< Loaded MLP index */
   std::vector<std::vector<std::pair<std::size_t, std::size_t>>>
       Input_Map,  /*!< Mapping of call variable inputs to matching MLP inputs */
       Output_Map; /*!< Mapping of call variable outputs to matching MLP outputs
                    */
-
 public:
   /*!
-   * \brief CIOMap class constructor;
-   * \param[in] MLP_collection - Pointer to CLookUp_ANN class for which the
-   * input-output amap is to be created \param[in] inputs - Input names for the
-   * call function. These should match with at least one of the MLP inputs.
-   * \param[in] outputs - Output names for the call function. These should match
-   * with at least one of the MLP outputs.
+   * \brief Initiate input-output map with user-defined input and output
+   * variables. \param[in] inputVariables_in - Vector containing input variable
+   * names. \param[in] outputVariables_in - Vector containing output variable
+   * names.
    */
-  CIOMap(CLookUp_ANN *MLP_collection, std::vector<std::string> &inputs,
-         std::vector<std::string> &outputs) {
-  /* Generate an input-output map given a set of call inputs and call outputs.
-  These inputs mapped to the inputs of the loaded MLPs in the MLP_collection
-  object. The call outputs are then matched to the MLPs with matching inputs.
-  */
-    PairVariableswithMLPs(MLP_collection, inputs, outputs);
-
-    // Perform checks on input-output validity
-    if (outputs.size() > 0) {
-      // Check wether all call inputs are used
-      MLP_collection->CheckUseOfInputs(inputs, this);
-
-      // Check wether all call outputs are present in the MLP collection
-      MLP_collection->CheckUseOfOutputs(outputs, this);
+  CIOMap(std::vector<std::string> &inputVariables_in,
+         std::vector<std::string> &outputVariables_in) {
+    inputVariables.resize(inputVariables_in.size());
+    for (auto iVar = 0u; iVar < inputVariables_in.size(); iVar++) {
+      inputVariables[iVar] = inputVariables_in[iVar];
+    }
+    outputVariables.resize(outputVariables_in.size());
+    for (auto iVar = 0u; iVar < outputVariables_in.size(); iVar++) {
+      outputVariables[iVar] = outputVariables_in[iVar];
     }
   }
 
   /*!
-   * \brief Set MLP index in IO map
-   * \param[in] iMLP - loaded MLP index
+   * \brief Insert MLP index with stored input and output variables.
+   * \param[in] iMLP - Loaded MLP index.
    */
-  void PushMLPindex(std::size_t iMLP) { MLP_indices.push_back(iMLP); }
+  void PushMLPIndex(std::size_t iMLP) { MLP_indices.push_back(iMLP); }
 
   /*!
-  * \brief Pair call inputs and outputs with the inputs and outputs of
-          the loaded MLPs
-  * \param[in] MLP_collection - pointer to MLP collection class
-  * \param[in] inputs - std::vector with call input variable names
-  * \param[in] outputs - std::vector with call output variable names
-  */
-  void PairVariableswithMLPs(CLookUp_ANN *MLP_collection,
-                             std::vector<std::string> &inputs,
-                             std::vector<std::string> &outputs) {
-    /*
-    In this function, the call inputs and outputs are matched to those within the
-    MLP collection.
-    */
-    bool isInput, isOutput;
-
-    // Looping over the loaded MLPs to check wether the MLP inputs match with the
-    // call inputs
-    for (size_t iMLP = 0; iMLP < MLP_collection->GetNANNs(); iMLP++) {
-      // Mapped call inputs to MLP inputs
-      std::vector<std::pair<size_t, size_t>> Input_Indices =
-          MLP_collection->FindVariableIndices(iMLP, inputs, true);
-      isInput = Input_Indices.size() > 0;
-
-      if (isInput) {
-        // Only when the MLP inputs match with a portion of the call inputs are
-        // the output variable checks performed
-
-        std::vector<std::pair<size_t, size_t>> Output_Indices =
-            MLP_collection->FindVariableIndices(iMLP, outputs, false);
-        isOutput = Output_Indices.size() > 0;
-
-        if (isOutput) {
-          // Update input and output mapping if both inputs and outputs match
-          MLP_indices.push_back(iMLP);
-          Input_Map.push_back(Input_Indices);
-          Output_Map.push_back(Output_Indices);
-        }
-      }
-    }
+   * \brief Insert MLP input translation vector.
+   * \param[in] inputIndices - Vector containing input variable index
+   * translation.
+   */
+  void PushInputIndices(std::vector<std::pair<size_t, size_t>> inputIndices) {
+    Input_Map.push_back(inputIndices);
   }
+
+  /*!
+   * \brief Insert MLP output translation vector.
+   * \param[in] outputIndices - Vector containing output variable index
+   * translation.
+   */
+  void PushOutputIndices(std::vector<std::pair<size_t, size_t>> outputIndices) {
+    Output_Map.push_back(outputIndices);
+  }
+
+  /*!
+   * \brief Get input variables of current input-output map.
+   * \return Vector of input variables.
+   */
+  std::vector<std::string> GetInputVars() { return inputVariables; }
+
+  /*!
+   * \brief Get output variables of current input-output map.
+   * \return Vector of output variables.
+   */
+  std::vector<std::string> GetOutputVars() { return outputVariables; }
 
   /*!
    * \brief Get the number of MLPs in the current IO map
@@ -222,7 +188,7 @@ public:
    * \return std::vector with call inputs in the correct order of the loaded MLP
    */
   std::vector<mlpdouble> GetMLPInputs(std::size_t i_Map,
-                                   std::vector<mlpdouble> &inputs) const {
+                                      std::vector<mlpdouble> &inputs) const {
     std::vector<mlpdouble> MLP_input;
     MLP_input.resize(Input_Map[i_Map].size());
 

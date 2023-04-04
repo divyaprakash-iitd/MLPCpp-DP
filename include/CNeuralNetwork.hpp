@@ -10,8 +10,8 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <limits>
 #include <map>
 
@@ -51,8 +51,8 @@ private:
       input_norm,  /*!< Normalization factors for network inputs */
       output_norm; /*!< Normalization factors for network outputs */
 
-  std::vector<mlpdouble> last_inputs; /*!< Inputs from previous lookup operation.
-                                      Evaluation of the network */
+  std::vector<mlpdouble> last_inputs; /*!< Inputs from previous lookup
+                                      operation. Evaluation of the network */
   /*!< is skipped if current inputs are the same as the last inputs. */
 
   mlpdouble *ANN_outputs; /*!< Pointer to network outputs */
@@ -171,16 +171,13 @@ public:
    */
   void SetActivationFunction(unsigned long i_layer, std::string input) {
     /*--- Translate activation function name from input file to a number ---*/
-
     activation_function_names[i_layer] = input;
 
     // Set activation function type in current layer.
     activation_function_types[i_layer] =
         activation_function_map.find(input)->second;
-
     return;
   }
-
 
   /*!
    * \brief Display the network architecture in the terminal.
@@ -191,63 +188,82 @@ public:
     int column_width = int(display_width / 3.0) - 1;
 
     /*--- Input layer information ---*/
-    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width)
+              << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
-    std::cout << "|" << std::left << std::setw(display_width - 1) << "Input Layer Information:"
-        << "|" << std::endl;
-    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << "|" << std::left << std::setw(display_width - 1)
+              << "Input Layer Information:"
+              << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width)
+              << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
-    std::cout << "|" << std::left << std::setw(column_width) << "Input Variable:"
-        << "|" << std::left << std::setw(column_width) << "Lower limit:"
-        << "|" << std::left << std::setw(column_width) << "Upper limit:"
-        << "|" << std::endl;
-    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << "|" << std::left << std::setw(column_width)
+              << "Input Variable:"
+              << "|" << std::left << std::setw(column_width) << "Lower limit:"
+              << "|" << std::left << std::setw(column_width) << "Upper limit:"
+              << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width)
+              << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
 
     /*--- Hidden layer information ---*/
     for (auto iInput = 0u; iInput < inputLayer->GetNNeurons(); iInput++)
       std::cout << "|" << std::left << std::setw(column_width)
-          << std::to_string(iInput + 1) + ": " + input_names[iInput] << "|" << std::right
-          << std::setw(column_width) << input_norm[iInput].first << "|" << std::right
-          << std::setw(column_width) << input_norm[iInput].second << "|" << std::endl;
-    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+                << std::to_string(iInput + 1) + ": " + input_names[iInput]
+                << "|" << std::right << std::setw(column_width)
+                << input_norm[iInput].first << "|" << std::right
+                << std::setw(column_width) << input_norm[iInput].second << "|"
+                << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width)
+              << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
-    std::cout << "|" << std::left << std::setw(display_width - 1) << "Hidden Layers Information:"
-        << "|" << std::endl;
-    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << "|" << std::left << std::setw(display_width - 1)
+              << "Hidden Layers Information:"
+              << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width)
+              << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
     std::cout << "|" << std::setw(column_width) << std::left << "Layer index"
-        << "|" << std::setw(column_width) << std::left << "Neuron count"
-        << "|" << std::setw(column_width) << std::left << "Function"
-        << "|" << std::endl;
-    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+              << "|" << std::setw(column_width) << std::left << "Neuron count"
+              << "|" << std::setw(column_width) << std::left << "Function"
+              << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width)
+              << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
     for (auto iLayer = 0u; iLayer < n_hidden_layers; iLayer++)
-      std::cout << "|" << std::setw(column_width) << std::right << iLayer + 1 << "|"
-          << std::setw(column_width) << std::right << hiddenLayers[iLayer]->GetNNeurons()
-          << "|" << std::setw(column_width) << std::right
-          << activation_function_names[iLayer + 1] << "|" << std::endl;
-    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+      std::cout << "|" << std::setw(column_width) << std::right << iLayer + 1
+                << "|" << std::setw(column_width) << std::right
+                << hiddenLayers[iLayer]->GetNNeurons() << "|"
+                << std::setw(column_width) << std::right
+                << activation_function_names[iLayer + 1] << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width)
+              << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
 
     /*--- Output layer information ---*/
-    std::cout << "|" << std::left << std::setw(display_width - 1) << "Output Layer Information:"
-        << "|" << std::endl;
-    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << "|" << std::left << std::setw(display_width - 1)
+              << "Output Layer Information:"
+              << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width)
+              << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
-    std::cout << "|" << std::left << std::setw(column_width) << "Output Variable:"
-        << "|" << std::left << std::setw(column_width) << "Lower limit:"
-        << "|" << std::left << std::setw(column_width) << "Upper limit:"
-        << "|" << std::endl;
-    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+    std::cout << "|" << std::left << std::setw(column_width)
+              << "Output Variable:"
+              << "|" << std::left << std::setw(column_width) << "Lower limit:"
+              << "|" << std::left << std::setw(column_width) << "Upper limit:"
+              << "|" << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width)
+              << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
     for (auto iOutput = 0u; iOutput < outputLayer->GetNNeurons(); iOutput++)
       std::cout << "|" << std::left << std::setw(column_width)
-          << std::to_string(iOutput + 1) + ": " + output_names[iOutput] << "|"
-          << std::right << std::setw(column_width) << output_norm[iOutput].first << "|"
-          << std::right << std::setw(column_width) << output_norm[iOutput].second << "|"
-          << std::endl;
-    std::cout << "+" << std::setfill('-') << std::setw(display_width) << std::right << "+" << std::endl;
+                << std::to_string(iOutput + 1) + ": " + output_names[iOutput]
+                << "|" << std::right << std::setw(column_width)
+                << output_norm[iOutput].first << "|" << std::right
+                << std::setw(column_width) << output_norm[iOutput].second << "|"
+                << std::endl;
+    std::cout << "+" << std::setfill('-') << std::setw(display_width)
+              << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
     std::cout << std::endl;
   }
@@ -258,8 +274,9 @@ public:
   void SizeWeights() {
     /*--- Size weight matrices based on neuron counts in each layer ---*/
 
-    /* Generate std::vector containing input, output, and hidden layer references
-    */
+    /* Generate std::vector containing input, output, and hidden layer
+     * references
+     */
     total_layers.resize(n_hidden_layers + 2);
     total_layers[0] = inputLayer;
     for (auto iLayer = 0u; iLayer < n_hidden_layers; iLayer++) {
@@ -275,7 +292,7 @@ public:
     for (auto iLayer = 1u; iLayer < n_hidden_layers; iLayer++) {
       weights_mat[iLayer].resize(hiddenLayers[iLayer]->GetNNeurons());
       for (auto iNeuron = 0u; iNeuron < hiddenLayers[iLayer]->GetNNeurons();
-          iNeuron++) {
+           iNeuron++) {
         weights_mat[iLayer][iNeuron].resize(
             hiddenLayers[iLayer - 1]->GetNNeurons());
       }
@@ -337,13 +354,12 @@ public:
     /*--- Evaluate MLP for given inputs ---*/
 
     mlpdouble y = 0, dy_dx = 0; // Activation function output.
-    bool same_point = true;
-    /* Normalize input and check if inputs are the same w.r.t last evaluation */
+
+    /* Normalize input */
     for (auto iNeuron = 0u; iNeuron < inputLayer->GetNNeurons(); iNeuron++) {
-      mlpdouble x_norm = (inputs[iNeuron] - input_norm[iNeuron].first) /
-                      (input_norm[iNeuron].second - input_norm[iNeuron].first);
-      if (abs(x_norm - inputLayer->GetOutput(iNeuron)) > 0)
-        same_point = false;
+      mlpdouble x_norm =
+          (inputs[iNeuron] - input_norm[iNeuron].first) /
+          (input_norm[iNeuron].second - input_norm[iNeuron].first);
       inputLayer->SetOutput(iNeuron, x_norm);
 
       if (compute_gradient)
@@ -351,221 +367,219 @@ public:
             iNeuron, iNeuron,
             1 / (input_norm[iNeuron].second - input_norm[iNeuron].first));
     }
-    /* Skip evaluation process if current point is the same as during the previous
-    * evaluation */
-    if (!same_point) {
-      mlpdouble alpha = 1.67326324;
-      mlpdouble lambda = 1.05070098;
-      /* Traverse MLP and compute inputs and outputs for the neurons in each layer
-      */
-      for (auto iLayer = 1u; iLayer < n_hidden_layers + 2; iLayer++) {
-        auto nNeurons_current =
-            total_layers[iLayer]->GetNNeurons(); // Neuron count of current layer
-        mlpdouble x;                                // Neuron input value
+    /* Skip evaluation process if current point is the same as during the
+     * previous evaluation */
+    mlpdouble alpha = 1.67326324;
+    mlpdouble lambda = 1.05070098;
+    /* Traverse MLP and compute inputs and outputs for the neurons in each layer
+     */
+    for (auto iLayer = 1u; iLayer < n_hidden_layers + 2; iLayer++) {
+      auto nNeurons_current =
+          total_layers[iLayer]->GetNNeurons(); // Neuron count of current layer
+      mlpdouble x;                             // Neuron input value
 
-        /* Compute and store input value for each neuron */
+      /* Compute and store input value for each neuron */
+      for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
+        x = ComputeX(iLayer, iNeuron);
+        total_layers[iLayer]->SetInput(iNeuron, x);
+        if (compute_gradient) {
+          for (auto iInput = 0u; iInput < inputLayer->GetNNeurons(); iInput++) {
+            dy_dx = ComputedOutputdInput(iLayer, iNeuron, iInput);
+            total_layers[iLayer]->SetdYdX(iNeuron, iInput, dy_dx);
+          }
+        }
+      }
+
+      /* Compute and store neuron output based on activation function */
+      switch (activation_function_types[iLayer]) {
+      case ENUM_ACTIVATION_FUNCTION::ELU:
         for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-          x = ComputeX(iLayer, iNeuron);
-          total_layers[iLayer]->SetInput(iNeuron, x);
+          x = total_layers[iLayer]->GetInput(iNeuron);
+          if (x > 0) {
+            y = x;
+            if (compute_gradient)
+              dy_dx = 1.0;
+          } else {
+            y = exp(x) - 1;
+            if (compute_gradient)
+              dy_dx = exp(x);
+          }
+          total_layers[iLayer]->SetOutput(iNeuron, y);
           if (compute_gradient) {
-            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons(); iInput++) {
-              dy_dx = ComputedOutputdInput(iLayer, iNeuron, iInput);
-              total_layers[iLayer]->SetdYdX(iNeuron, iInput, dy_dx);
+            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
+                 iInput++) {
+              total_layers[iLayer]->SetdYdX(
+                  iNeuron, iInput,
+                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
             }
           }
         }
-
-        /* Compute and store neuron output based on activation function */
-        switch (activation_function_types[iLayer]) {
-        case ENUM_ACTIVATION_FUNCTION::ELU:
-          for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-            x = total_layers[iLayer]->GetInput(iNeuron);
-            if (x > 0) {
-              y = x;
-              if (compute_gradient)
-                dy_dx = 1.0;
-            } else {
-              y = exp(x) - 1;
-              if (compute_gradient)
-                dy_dx = exp(x);
-            }
-            total_layers[iLayer]->SetOutput(iNeuron, y);
-            if (compute_gradient) {
-              for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                  iInput++) {
-                total_layers[iLayer]->SetdYdX(
-                    iNeuron, iInput,
-                    dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-              }
+        break;
+      case ENUM_ACTIVATION_FUNCTION::LINEAR:
+        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
+          x = total_layers[iLayer]->GetInput(iNeuron);
+          y = x;
+          total_layers[iLayer]->SetOutput(iNeuron, y);
+          if (compute_gradient) {
+            dy_dx = 1.0;
+            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
+                 iInput++) {
+              total_layers[iLayer]->SetdYdX(
+                  iNeuron, iInput,
+                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
             }
           }
-          break;
-        case ENUM_ACTIVATION_FUNCTION::LINEAR:
-          for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-            x = total_layers[iLayer]->GetInput(iNeuron);
+        }
+        break;
+      case ENUM_ACTIVATION_FUNCTION::EXPONENTIAL:
+        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
+          x = total_layers[iLayer]->GetInput(iNeuron);
+          y = exp(x);
+          total_layers[iLayer]->SetOutput(iNeuron, y);
+          if (compute_gradient) {
+            dy_dx = 1.0;
+            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
+                 iInput++) {
+              total_layers[iLayer]->SetdYdX(
+                  iNeuron, iInput,
+                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
+            }
+          }
+        }
+        break;
+      case ENUM_ACTIVATION_FUNCTION::RELU:
+        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
+          x = total_layers[iLayer]->GetInput(iNeuron);
+          if (x > 0) {
             y = x;
-            total_layers[iLayer]->SetOutput(iNeuron, y);
-            if (compute_gradient) {
+            if (compute_gradient)
               dy_dx = 1.0;
-              for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                  iInput++) {
-                total_layers[iLayer]->SetdYdX(
-                    iNeuron, iInput,
-                    dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-              }
-            }
-          }
-          break;
-        case ENUM_ACTIVATION_FUNCTION::EXPONENTIAL:
-          for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-            x = total_layers[iLayer]->GetInput(iNeuron);
-            y = exp(x);
-            total_layers[iLayer]->SetOutput(iNeuron, y);
-            if (compute_gradient) {
-              dy_dx = 1.0;
-              for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                  iInput++) {
-                total_layers[iLayer]->SetdYdX(
-                    iNeuron, iInput,
-                    dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-              }
-            }
-          }
-          break;
-        case ENUM_ACTIVATION_FUNCTION::RELU:
-          for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-            x = total_layers[iLayer]->GetInput(iNeuron);
-            if (x > 0) {
-              y = x;
-              if (compute_gradient)
-                dy_dx = 1.0;
-            } else {
-              y = 0.0;
-              if (compute_gradient)
-                dy_dx = 0.0;
-            }
-            total_layers[iLayer]->SetOutput(iNeuron, y);
-            if (compute_gradient) {
-              for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                  iInput++) {
-                total_layers[iLayer]->SetdYdX(
-                    iNeuron, iInput,
-                    dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-              }
-            }
-          }
-          break;
-        case ENUM_ACTIVATION_FUNCTION::SWISH:
-          for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-            x = total_layers[iLayer]->GetInput(iNeuron);
-            y = x / (1 + exp(-x));
-            total_layers[iLayer]->SetOutput(iNeuron, y);
-            if (compute_gradient) {
-              dy_dx = exp(x) * (x + exp(x) + 1) / pow(exp(x) + 1, 2);
-              for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                  iInput++) {
-                total_layers[iLayer]->SetdYdX(
-                    iNeuron, iInput,
-                    dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-              }
-            }
-          }
-          break;
-        case ENUM_ACTIVATION_FUNCTION::TANH:
-          for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-            x = total_layers[iLayer]->GetInput(iNeuron);
-            y = tanh(x);
-            total_layers[iLayer]->SetOutput(iNeuron, y);
-            if (compute_gradient) {
-              dy_dx = 1 / pow(cosh(x), 2);
-              for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                  iInput++) {
-                total_layers[iLayer]->SetdYdX(
-                    iNeuron, iInput,
-                    dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-              }
-            }
-          }
-          break;
-        case ENUM_ACTIVATION_FUNCTION::SIGMOID:
-          for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-            x = total_layers[iLayer]->GetInput(iNeuron);
-            y = 1.0 / (1 + exp(-x));
-            total_layers[iLayer]->SetOutput(iNeuron, y);
-            if (compute_gradient) {
-              dy_dx = exp(-x) / pow(exp(-x) + 1, 2);
-              for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                  iInput++) {
-                total_layers[iLayer]->SetdYdX(
-                    iNeuron, iInput,
-                    dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-              }
-            }
-          }
-          break;
-        case ENUM_ACTIVATION_FUNCTION::SELU:
-          for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-            x = total_layers[iLayer]->GetInput(iNeuron);
-            if (x > 0.0) {
-              y = lambda * x;
-              if (compute_gradient)
-                dy_dx = lambda;
-            } else {
-              y = lambda * alpha * (exp(x) - 1);
-              if (compute_gradient)
-                dy_dx = lambda * alpha * exp(x);
-            }
-            total_layers[iLayer]->SetOutput(iNeuron, y);
-            if (compute_gradient) {
-              for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                  iInput++) {
-                total_layers[iLayer]->SetdYdX(
-                    iNeuron, iInput,
-                    dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-              }
-            }
-          }
-          break;
-        case ENUM_ACTIVATION_FUNCTION::GELU:
-          for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-            x = total_layers[iLayer]->GetInput(iNeuron);
-
-            y = 0.5 * x *
-                (1 + tanh(0.7978845608028654 * (x + 0.044715 * pow(x, 3))));
-            total_layers[iLayer]->SetOutput(iNeuron, y);
-            if (compute_gradient) {
-              dy_dx = 0.5 *
-                      (tanh(0.0356774 * pow(x, 3) + 0.797885 * x) +
-                      (0.107032 * pow(x, 3) + 0.797885 * x) * pow(cosh(x), -2) *
-                          (0.0356774 * pow(x, 3) + 0.797885 * x));
-              for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                  iInput++) {
-                total_layers[iLayer]->SetdYdX(
-                    iNeuron, iInput,
-                    dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-              }
-            }
-          }
-          break;
-        case ENUM_ACTIVATION_FUNCTION::NONE:
-          for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
+          } else {
             y = 0.0;
-            total_layers[iLayer]->SetOutput(iNeuron, y);
-            if (compute_gradient) {
+            if (compute_gradient)
               dy_dx = 0.0;
-              for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                  iInput++) {
-                total_layers[iLayer]->SetdYdX(
-                    iNeuron, iInput,
-                    dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-              }
+          }
+          total_layers[iLayer]->SetOutput(iNeuron, y);
+          if (compute_gradient) {
+            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
+                 iInput++) {
+              total_layers[iLayer]->SetdYdX(
+                  iNeuron, iInput,
+                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
             }
           }
-          break;
-        default:
-          break;
-        } // activation_function_types
-      }
+        }
+        break;
+      case ENUM_ACTIVATION_FUNCTION::SWISH:
+        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
+          x = total_layers[iLayer]->GetInput(iNeuron);
+          y = x / (1 + exp(-x));
+          total_layers[iLayer]->SetOutput(iNeuron, y);
+          if (compute_gradient) {
+            dy_dx = exp(x) * (x + exp(x) + 1) / pow(exp(x) + 1, 2);
+            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
+                 iInput++) {
+              total_layers[iLayer]->SetdYdX(
+                  iNeuron, iInput,
+                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
+            }
+          }
+        }
+        break;
+      case ENUM_ACTIVATION_FUNCTION::TANH:
+        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
+          x = total_layers[iLayer]->GetInput(iNeuron);
+          y = tanh(x);
+          total_layers[iLayer]->SetOutput(iNeuron, y);
+          if (compute_gradient) {
+            dy_dx = 1 / pow(cosh(x), 2);
+            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
+                 iInput++) {
+              total_layers[iLayer]->SetdYdX(
+                  iNeuron, iInput,
+                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
+            }
+          }
+        }
+        break;
+      case ENUM_ACTIVATION_FUNCTION::SIGMOID:
+        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
+          x = total_layers[iLayer]->GetInput(iNeuron);
+          y = 1.0 / (1 + exp(-x));
+          total_layers[iLayer]->SetOutput(iNeuron, y);
+          if (compute_gradient) {
+            dy_dx = exp(-x) / pow(exp(-x) + 1, 2);
+            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
+                 iInput++) {
+              total_layers[iLayer]->SetdYdX(
+                  iNeuron, iInput,
+                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
+            }
+          }
+        }
+        break;
+      case ENUM_ACTIVATION_FUNCTION::SELU:
+        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
+          x = total_layers[iLayer]->GetInput(iNeuron);
+          if (x > 0.0) {
+            y = lambda * x;
+            if (compute_gradient)
+              dy_dx = lambda;
+          } else {
+            y = lambda * alpha * (exp(x) - 1);
+            if (compute_gradient)
+              dy_dx = lambda * alpha * exp(x);
+          }
+          total_layers[iLayer]->SetOutput(iNeuron, y);
+          if (compute_gradient) {
+            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
+                 iInput++) {
+              total_layers[iLayer]->SetdYdX(
+                  iNeuron, iInput,
+                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
+            }
+          }
+        }
+        break;
+      case ENUM_ACTIVATION_FUNCTION::GELU:
+        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
+          x = total_layers[iLayer]->GetInput(iNeuron);
+
+          y = 0.5 * x *
+              (1 + tanh(0.7978845608028654 * (x + 0.044715 * pow(x, 3))));
+          total_layers[iLayer]->SetOutput(iNeuron, y);
+          if (compute_gradient) {
+            dy_dx = 0.5 *
+                    (tanh(0.0356774 * pow(x, 3) + 0.797885 * x) +
+                     (0.107032 * pow(x, 3) + 0.797885 * x) * pow(cosh(x), -2) *
+                         (0.0356774 * pow(x, 3) + 0.797885 * x));
+            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
+                 iInput++) {
+              total_layers[iLayer]->SetdYdX(
+                  iNeuron, iInput,
+                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
+            }
+          }
+        }
+        break;
+      case ENUM_ACTIVATION_FUNCTION::NONE:
+        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
+          y = 0.0;
+          total_layers[iLayer]->SetOutput(iNeuron, y);
+          if (compute_gradient) {
+            dy_dx = 0.0;
+            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
+                 iInput++) {
+              total_layers[iLayer]->SetdYdX(
+                  iNeuron, iInput,
+                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
+            }
+          }
+        }
+        break;
+      default:
+        break;
+      } // activation_function_types
     }
     /* Compute and de-normalize MLP output */
     for (auto iNeuron = 0u; iNeuron < outputLayer->GetNNeurons(); iNeuron++) {
@@ -576,7 +590,7 @@ public:
         dy_dx = (output_norm[iNeuron].second - output_norm[iNeuron].first);
         for (auto iInput = 0u; iInput < inputLayer->GetNNeurons(); iInput++) {
           outputLayer->SetdYdX(iNeuron, iInput,
-                              dy_dx * outputLayer->GetdYdX(iNeuron, iInput));
+                               dy_dx * outputLayer->GetdYdX(iNeuron, iInput));
           dOutputs_dInputs[iNeuron][iInput] =
               outputLayer->GetdYdX(iNeuron, iInput);
         }
@@ -592,7 +606,8 @@ public:
    * \param[in] input_min - Minimum input value.
    * \param[in] input_max - Maximum input value.
    */
-  void SetInputNorm(unsigned long iInput, mlpdouble input_min, mlpdouble input_max) {
+  void SetInputNorm(unsigned long iInput, mlpdouble input_min,
+                    mlpdouble input_max) {
     input_norm[iInput] = std::make_pair(input_min, input_max);
   }
 
@@ -705,7 +720,7 @@ public:
     return x;
   }
   mlpdouble ComputedOutputdInput(std::size_t iLayer, std::size_t iNeuron,
-                              std::size_t iInput) const {
+                                 std::size_t iInput) const {
     mlpdouble doutput_dinput = 0;
     for (auto jNeuron = 0u; jNeuron < total_layers[iLayer - 1]->GetNNeurons();
          jNeuron++) {

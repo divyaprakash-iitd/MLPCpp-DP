@@ -144,8 +144,8 @@ public:
      * evaluated through extrapolation. */
     mlpdouble distance_to_query = 1e20; // Overall smallest distance between
                                         // training data set middle and query.
-    size_t i_ANN_nearest = 0, // Index of nearest MLP.
-        i_map_nearest = 0;    // Index of nearest iomap index.
+    size_t i_ANN_nearest = 0,           // Index of nearest MLP.
+        i_map_nearest = 0;              // Index of nearest iomap index.
 
     for (auto i_map = 0u; i_map < input_output_map->GetNMLPs(); i_map++) {
       within_range = true;
@@ -209,9 +209,9 @@ public:
   }
 
   /*!
-  * \brief Pair inputs and outputs with look-up operations.
-  * \param[in] ioMap - input-output map to pair variables with.
-  */
+   * \brief Pair inputs and outputs with look-up operations.
+   * \param[in] ioMap - input-output map to pair variables with.
+   */
   void PairVariableswithMLPs(MLPToolbox::CIOMap &ioMap) {
     /*
     In this function, the call inputs and outputs are matched to those within

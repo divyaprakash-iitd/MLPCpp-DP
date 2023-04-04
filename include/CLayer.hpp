@@ -2,7 +2,7 @@
  * \file CLayer.hpp
  * \brief Declaration of artificial neural network interpolation class
  * \author E.C.Bunschoten
- * \version 1.0.0
+ * \version 1.1.0
  */
 #pragma once
 

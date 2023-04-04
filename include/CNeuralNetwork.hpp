@@ -2,7 +2,7 @@
  * \file CNeuralNetwork.hpp
  * \brief Declaration of the neural network class
  * \author E.C.Bunschoten
- * \version 1.0.0
+ * \version 1.1.0
  */
 
 #pragma once

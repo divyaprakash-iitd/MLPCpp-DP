@@ -1,7 +1,7 @@
 /*!
  * \file main.cpp
  * \brief Example code on how to use the MLP toolbox in a c++ environment for
- * regression. \author E.C.Bunschoten \version 1.0.0
+ * regression. \author E.C.Bunschoten \version 1.1.0
  */
 #include <iostream>
 #include <string>

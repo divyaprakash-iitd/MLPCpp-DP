@@ -1,8 +1,32 @@
 /*!
- * \file main.cpp
- * \brief Example code on how to use the MLP toolbox in a c++ environment for
- * regression. \author E.C.Bunschoten \version 1.1.0
- */
+* \file main.cpp
+* \brief Example script demonstrating the use of the MLPCpp library within C++
+code.
+* \author E.C.Bunschoten
+* \version 1.1.0
+*
+* MLPCpp Project Website: https://github.com/EvertBunschoten/MLPCpp
+*
+* Copyright (c) 2023 Evert Bunschoten
+
+* Permission is hereby granted, free of charge, to any person obtaining a copy
+* of this software and associated documentation files (the "Software"), to deal
+* in the Software without restriction, including without limitation the rights
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the Software is
+* furnished to do so, subject to the following conditions:
+
+* The above copyright notice and this permission notice shall be included in all
+* copies or substantial portions of the Software.
+
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+* SOFTWARE.
+*/
 #include <iostream>
 #include <string>
 #include <vector>
@@ -18,12 +42,14 @@ int main() {
 
   /*--- First specify an array of MLP input file names (preprocessing) ---*/
   string input_filenames[] = {
-      "MLP_1.mlp", "MLP_2.mlp"}; /*!< String array containing MLP input file names. */
-  unsigned short nMLPs = sizeof(input_filenames)/sizeof(string);
+      "MLP_1.mlp",
+      "MLP_2.mlp"}; /*!< String array containing MLP input file names. */
+  unsigned short nMLPs = sizeof(input_filenames) / sizeof(string);
 
   /*--- Generate a collection of MLPs with the architectures described in the
    * input file(s) ---*/
-  MLPToolbox::CLookUp_ANN ANN_test = MLPToolbox::CLookUp_ANN(nMLPs, input_filenames);
+  MLPToolbox::CLookUp_ANN ANN_test =
+      MLPToolbox::CLookUp_ANN(nMLPs, input_filenames);
 
   /* Step 2: Input-Output mapping (preprocessing) */
   /* Define an input-output map for each look-up operation to be performed. */
@@ -83,7 +109,8 @@ int main() {
      * look-up process specified through the input-output map and set the output
      * values. ---*/
     auto inside = ANN_test.PredictANN(&iomap, MLP_inputs, MLP_outputs);
-    cout << val_cv_1 << ", " << val_output_2 << ", " << val_output_3 << ", "<< val_output_6 << ", " << inside << endl;
+    cout << val_cv_1 << ", " << val_output_2 << ", " << val_output_3 << ", "
+         << val_output_6 << ", " << inside << endl;
 
     val_cv_1 += 0.01;
   }

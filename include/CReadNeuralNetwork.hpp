@@ -1,19 +1,40 @@
 /*!
- * \file CReadNeuralNetwork.hpp
- * \brief Declaration of MLP input file reader class
- * \author E.C.Bunschoten
- * \version 1.1.0
+* \file CReadNeuralNetwork.hpp
+* \brief Read MLP input files.
+* \author E.C.Bunschoten
+* \version 1.1.0
+*
+* MLPCpp Project Website: https://github.com/EvertBunschoten/MLPCpp
+*
+* Copyright (c) 2023 Evert Bunschoten
 
- */
+* Permission is hereby granted, free of charge, to any person obtaining a copy
+* of this software and associated documentation files (the "Software"), to deal
+* in the Software without restriction, including without limitation the rights
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the Software is
+* furnished to do so, subject to the following conditions:
+
+* The above copyright notice and this permission notice shall be included in all
+* copies or substantial portions of the Software.
+
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+* SOFTWARE.
+*/
 #pragma once
 
+#include "variable_def.hpp"
 #include <cmath>
 #include <cstdlib>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <limits>
 #include <vector>
-#include "variable_def.hpp"
 
 namespace MLPToolbox {
 
@@ -31,7 +52,8 @@ private:
   std::vector<std::vector<std::vector<mlpdouble>>>
       weights_mat; /*!< Network synapse weights. */
 
-  std::vector<std::vector<mlpdouble>> biases_mat; /*!< Bias values per neuron. */
+  std::vector<std::vector<mlpdouble>>
+      biases_mat; /*!< Bias values per neuron. */
 
   std::vector<std::string>
       activation_functions; /*!< Activation function per layer. */
@@ -45,9 +67,7 @@ public:
    * \param[in] filename_in - .mlp input file name containing network
    * information.
    */
-  CReadNeuralNetwork(std::string filename_in) {
-    filename = filename_in;
-  }
+  CReadNeuralNetwork(std::string filename_in) { filename = filename_in; }
 
   /*!
    * \brief Read input file and store necessary information
@@ -61,7 +81,7 @@ public:
 
     std::string line, word;
     bool eoHeader = false, found_layercount = false, found_input_names = false,
-        found_output_names = false;
+         found_output_names = false;
 
     /* Read general architecture information from file header */
 
@@ -88,14 +108,14 @@ public:
               "No layer count provided before defining neuron count per layer");
         }
         /* Loop over layer count and size neuron count and bias count per layer
-        * accordingly */
+         * accordingly */
         for (auto iLayer = 0u; iLayer < n_layers; iLayer++) {
           getline(file_stream, line);
           n_neurons[iLayer] = stoul(line);
           biases_mat[iLayer].resize(n_neurons[iLayer]);
         }
         /* Loop over spaces between layers and size the weight matrices
-        * accordingly */
+         * accordingly */
         for (auto iLayer = 0u; iLayer < n_layers - 1; iLayer++) {
           weights_mat[iLayer].resize(n_neurons[iLayer]);
           for (auto iNeuron = 0u; iNeuron < n_neurons[iLayer]; iNeuron++)
@@ -108,15 +128,16 @@ public:
 
         output_norm.resize(n_neurons[n_neurons.size() - 1]);
         for (auto iNeuron = 0u; iNeuron < n_neurons[n_neurons.size() - 1];
-            iNeuron++)
+             iNeuron++)
           output_norm[iNeuron] = std::make_pair(0, 1);
       }
 
       /* Read layer activation function types */
       if (line.compare("[activation function]") == 0) {
         if (!found_layercount) {
-          throw std::invalid_argument("No layer count provided before providing "
-                                      "layer activation functions");
+          throw std::invalid_argument(
+              "No layer count provided before providing "
+              "layer activation functions");
         }
         for (auto iLayer = 0u; iLayer < n_layers; iLayer++) {
           getline(file_stream, line);
@@ -136,8 +157,9 @@ public:
         }
       }
 
-      /* In case input normalization is applied, read upper and lower input bounds
-      */
+      /* In case input normalization is applied, read upper and lower input
+       * bounds
+       */
       if (line.compare("[input normalization]") == 0) {
         for (auto iInput = 0u; iInput < input_norm.size(); iInput++) {
           getline(file_stream, line);
@@ -163,13 +185,14 @@ public:
         }
 
         if (output_names.size() != (n_neurons[n_neurons.size() - 1])) {
-          throw std::invalid_argument("No layer count provided before providing "
-                                      "layer activation functions");
+          throw std::invalid_argument(
+              "No layer count provided before providing "
+              "layer activation functions");
         }
       }
 
       /* In case output normalization is applied, read upper and lower output
-      * bounds */
+       * bounds */
       if (line.compare("[output normalization]") == 0) {
         for (auto iOutput = 0u; iOutput < output_norm.size(); iOutput++) {
           getline(file_stream, line);
@@ -231,8 +254,9 @@ public:
    * \returns flag line
    */
   std::string SkipToFlag(std::ifstream *file_stream, std::string flag) {
-    /*--- Search file for a line and set it as the current line in the file stream
-    * ---*/
+    /*--- Search file for a line and set it as the current line in the file
+     * stream
+     * ---*/
     std::string line;
     getline(*file_stream, line);
 
@@ -245,7 +269,6 @@ public:
 
     return line;
   }
-
 
   /*!
    * \brief Get number of read input variables.
@@ -282,7 +305,7 @@ public:
    * \returns Weight value
    */
   mlpdouble GetWeight(std::size_t iLayer, std::size_t iNeuron,
-                   std::size_t jNeuron) const {
+                      std::size_t jNeuron) const {
     return weights_mat[iLayer][iNeuron][jNeuron];
   }
 

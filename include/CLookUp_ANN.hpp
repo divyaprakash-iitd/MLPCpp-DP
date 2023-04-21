@@ -148,6 +148,33 @@ public:
   }
 
   /*!
+   * \brief Get average input variable bounds of the loaded MLPs for a specific
+   * look-up operation. 
+   * \param[in] input_output_map - Pointer to input-output
+   * map for look-up operation. 
+   * \param[in] input_index - Input variable index
+   * for which to get the bounds.
+   */
+  std::pair<mlpdouble, mlpdouble>
+  GetInputNorm(MLPToolbox::CIOMap *input_output_map,
+               std::size_t input_index) const {
+    mlpdouble CV_min{0.0}, CV_max{0.0};
+
+    for (auto i_map = 0u; i_map < input_output_map->GetNMLPs(); i_map++) {
+      auto i_ANN = input_output_map->GetMLPIndex(i_map);
+      auto i_input = input_output_map->GetInputIndex(i_map, input_index);
+      std::pair<mlpdouble, mlpdouble> ANN_input_limits =
+          NeuralNetworks[i_ANN].GetInputNorm(i_input);
+      CV_min += ANN_input_limits.first;
+      CV_max += ANN_input_limits.second;
+    }
+
+    CV_min /= input_output_map->GetNMLPs();
+    CV_max /= input_output_map->GetNMLPs();
+    return std::make_pair(CV_min, CV_max);
+  }
+
+  /*!
    * \brief Evaluate loaded ANNs for given inputs and outputs
    * \param[in] input_output_map - input-output map coupling desired inputs and
    * outputs to loaded ANNs \param[in] inputs - input values \param[in] outputs

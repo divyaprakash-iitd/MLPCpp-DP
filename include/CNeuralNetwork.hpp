@@ -566,8 +566,7 @@ public:
         for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
           x = total_layers[iLayer]->GetInput(iNeuron);
 
-          y = 0.5 * x *
-              (1 + tanh(0.7978845608028654 * (x + 0.044715 * pow(x, 3))));
+          y = x / (1 + exp(-1.702*x));
           total_layers[iLayer]->SetOutput(iNeuron, y);
           if (compute_gradient) {
             dy_dx = 0.5 *

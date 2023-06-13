@@ -165,6 +165,13 @@ public:
     neurons[i_neuron].SetGradient(iInput, dy_dx);
   }
 
+  mlpdouble Getd2YdX2(std::size_t iNeuron, std::size_t iInput, std::size_t jInput) {
+    return neurons[iNeuron].GetSecondGradient(iInput, jInput);
+  }
+  
+  void Setd2YdX2(std::size_t iNeuron, std::size_t iInput, std::size_t jInput, mlpdouble d2y_dx2) {
+    neurons[iNeuron].SetSecondGradient(iInput, jInput, d2y_dx2);
+  }
   /*!
    * \brief Size neuron output derivative wrt network inputs.
    * \param[in] nInputs - Number of network inputs.

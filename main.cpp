@@ -32,6 +32,7 @@ code.
 #include <vector>
 /*--- Include the look-up MLP class ---*/
 #include "include/CLookUp_ANN.hpp"
+#include <chrono>
 
 using namespace std;
 
@@ -86,6 +87,28 @@ int main() {
   MLP_inputs.resize(input_names.size());
   MLP_outputs.resize(output_names.size());
 
+  vector<vector<double>> dOutputs_dInputs;
+  vector<vector<double*>> dOutputs_dInputs_refs;
+  vector<vector<vector<double>>> d2Outputs_dInputs2;
+  vector<vector<vector<double*>>> d2Outputs_dInputs2_refs;
+  dOutputs_dInputs.resize(output_names.size());
+  d2Outputs_dInputs2.resize(output_names.size());
+  dOutputs_dInputs_refs.resize(output_names.size());
+  d2Outputs_dInputs2_refs.resize(output_names.size());
+  for(auto iOutput=0u; iOutput < output_names.size(); iOutput++) {
+    dOutputs_dInputs[iOutput].resize(input_names.size());
+    d2Outputs_dInputs2[iOutput].resize(input_names.size());
+    dOutputs_dInputs_refs[iOutput].resize(input_names.size());
+    d2Outputs_dInputs2_refs[iOutput].resize(input_names.size());
+    for (auto iInput=0u; iInput < input_names.size(); iInput++) {
+      dOutputs_dInputs_refs[iOutput][iInput] = &dOutputs_dInputs[iOutput][iInput];
+      d2Outputs_dInputs2[iOutput][iInput].resize(input_names.size());
+      d2Outputs_dInputs2_refs[iOutput][iInput].resize(input_names.size());
+      for (auto jInput=0u; jInput < input_names.size(); jInput++) {
+        d2Outputs_dInputs2_refs[iOutput][iInput][jInput] = & d2Outputs_dInputs2[iOutput][iInput][jInput];
+      }
+    }
+  }
   /*--- Set pointer to output variables ---*/
   double val_output_2, val_output_3, val_output_6;
   MLP_outputs[0] = &val_output_2;
@@ -99,7 +122,7 @@ int main() {
   double val_cv_1 = -0.575;
   double val_cv_2 = 0;
   double val_cv_3 = 0.0144;
-
+  auto start = chrono::high_resolution_clock::now();
   while (val_cv_1 < 0.0) {
     MLP_inputs[0] = val_cv_1;
     MLP_inputs[1] = val_cv_2;
@@ -108,10 +131,13 @@ int main() {
     /*--- Call the PredictANN function to evaluate the relevant MLPs for the
      * look-up process specified through the input-output map and set the output
      * values. ---*/
-    auto inside = ANN_test.PredictANN(&iomap, MLP_inputs, MLP_outputs);
+    auto inside = ANN_test.PredictANN(&iomap, MLP_inputs, MLP_outputs, &dOutputs_dInputs_refs, &d2Outputs_dInputs2_refs);
     cout << val_cv_1 << ", " << val_output_2 << ", " << val_output_3 << ", "
-         << val_output_6 << ", " << inside << endl;
+         << val_output_6 << ", " <<  dOutputs_dInputs[0][0] << ", " << d2Outputs_dInputs2[0][0][0] <<  endl;;
 
     val_cv_1 += 0.01;
   }
+  auto end = chrono::high_resolution_clock::now();
+  auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
+  cout << duration.count() << endl;
 }

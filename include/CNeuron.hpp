@@ -52,6 +52,7 @@ private:
       doutput_dinput{0},  /*!< Gradient of output with respect to input */
       bias{0};            /*!< Bias value at current neuron */
   std::vector<mlpdouble> doutput_dinputs;
+  std::vector<std::vector<mlpdouble>> d2output_d2inputs;
 
 public:
   /*!
@@ -106,8 +107,13 @@ public:
    * \brief Size the derivative of the neuron output wrt MLP inputs.
    * \param[in] nInputs - Number of MLP inputs.
    */
-  void SizeGradient(std::size_t nInputs) { doutput_dinputs.resize(nInputs); }
-
+  void SizeGradient(std::size_t nInputs) { 
+    doutput_dinputs.resize(nInputs); 
+    d2output_d2inputs.resize(nInputs);
+    for (auto iInput=0u; iInput<nInputs; iInput++) {
+      d2output_d2inputs[iInput].resize(nInputs);
+    }
+  }
   /*!
    * \brief Set neuron output gradient with respect to its input value
    * \param[in] input - Derivative of activation function with respect to input
@@ -116,12 +122,19 @@ public:
     doutput_dinputs[iInput] = input;
   }
 
+  void SetSecondGradient(std::size_t iInput, std::size_t jInput, mlpdouble input) {
+    d2output_d2inputs[iInput][jInput] = input;
+  }
   /*!
    * \brief Get neuron output gradient with respect to input value
    * \return output gradient wrt input value
    */
   mlpdouble GetGradient(std::size_t iInput) const {
     return doutput_dinputs[iInput];
+  }
+
+  mlpdouble GetSecondGradient(std::size_t iInput, std::size_t jInput) const {
+    return d2output_d2inputs[iInput][jInput];
   }
 };
 

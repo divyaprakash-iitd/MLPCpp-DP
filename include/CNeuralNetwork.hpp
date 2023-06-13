@@ -560,13 +560,9 @@ public:
           dOutputs_dInputs[iNeuron][jInput] =
               outputLayer->GetdYdX(iNeuron, jInput);
 
-          mlpdouble input_scale_j =
-              input_norm[jInput].second - input_norm[jInput].first;
           if (compute_second_gradient) {
             for (auto kInput = 0u; kInput < inputLayer->GetNNeurons();
                  kInput++) {
-              mlpdouble input_scale_k =
-                  input_norm[kInput].second - input_norm[kInput].first;
               outputLayer->Setd2YdX2(
                   iNeuron, jInput, kInput,
                   output_scale *

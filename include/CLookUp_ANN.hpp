@@ -77,7 +77,6 @@ private:
 
     /* Generate basic layer architectures */
     ANN.DefineInputLayer(Reader.GetNInputs());
-    ANN.SizeInputs(Reader.GetNInputs());
     for (auto iInput = 0u; iInput < Reader.GetNInputs(); iInput++) {
       ANN.SetInputName(iInput, Reader.GetInputName(iInput));
     }
@@ -177,16 +176,26 @@ public:
   /*!
    * \brief Evaluate loaded ANNs for given inputs and outputs
    * \param[in] input_output_map - input-output map coupling desired inputs and
-   * outputs to loaded ANNs \param[in] inputs - input values \param[in] outputs
-   * - pointers to output variables \returns Within output normalization range.
+   * outputs to loaded ANNs.
+   * \param[in] inputs - input values.
+   * \param[in] outputs - pointers to output variables.
+   * \param[in] doutputs_dinputs - pointers to output derivatives w.r.t. inputs.
+   * \param[in] d2outputs_dinputs2 - pointers to output second order derivatives
+   * w.r.t. inputs. \returns Within output normalization range.
    */
-  unsigned long PredictANN(MLPToolbox::CIOMap *input_output_map,
-                           std::vector<mlpdouble> &inputs,
-                           std::vector<mlpdouble *> &outputs) {
+  unsigned long PredictANN(
+      MLPToolbox::CIOMap *input_output_map, std::vector<mlpdouble> &inputs,
+      std::vector<mlpdouble *> &outputs,
+      const std::vector<std::vector<mlpdouble *>> *doutputs_dinputs = nullptr,
+      std::vector<std::vector<std::vector<mlpdouble *>>> *d2outputs_dinputs2 =
+          nullptr) {
     /*--- Evaluate MLP based on target input and output variables ---*/
     bool within_range, // Within MLP training set range.
         MLP_was_evaluated =
             false; // MLP was evaluated within training set range.
+
+    bool compute_firstorder_gradient = (doutputs_dinputs != nullptr),
+         compute_secondorder_gradient = (d2outputs_dinputs2 != nullptr);
 
     /* If queries lie outside the training data set, the nearest MLP will be
      * evaluated through extrapolation. */
@@ -198,6 +207,10 @@ public:
     for (auto i_map = 0u; i_map < input_output_map->GetNMLPs(); i_map++) {
       within_range = true;
       auto i_ANN = input_output_map->GetMLPIndex(i_map);
+      NeuralNetworks[i_ANN].ComputeFirstOrderGradient(
+          compute_firstorder_gradient);
+      NeuralNetworks[i_ANN].ComputeSecondOrderGradient(
+          compute_secondorder_gradient);
       auto ANN_inputs = input_output_map->GetMLPInputs(i_map, inputs);
 
       mlpdouble distance_to_query_i = 0;
@@ -228,6 +241,28 @@ public:
           *outputs[input_output_map->GetOutputIndex(i_map, i)] =
               NeuralNetworks[i_ANN].GetANNOutput(
                   input_output_map->GetMLPOutputIndex(i_map, i));
+          if (compute_firstorder_gradient) {
+            for (auto iInput = 0u; iInput < inputs.size(); iInput++) {
+              *(doutputs_dinputs->at(input_output_map->GetOutputIndex(i_map, i))
+                    .at(iInput)) =
+                  NeuralNetworks[i_ANN].GetdOutputdInput(
+                      input_output_map->GetMLPOutputIndex(i_map, i),
+                      input_output_map->GetInputIndex(i_map, iInput));
+
+              if (compute_secondorder_gradient) {
+                for (auto jInput = 0u; jInput < inputs.size(); jInput++) {
+                  *(d2outputs_dinputs2
+                        ->at(input_output_map->GetOutputIndex(i_map, i))
+                        .at(iInput)
+                        .at(jInput)) =
+                      NeuralNetworks[i_ANN].Getd2OutputdInput2(
+                          input_output_map->GetMLPOutputIndex(i_map, i),
+                          input_output_map->GetInputIndex(i_map, iInput),
+                          input_output_map->GetInputIndex(i_map, jInput));
+                }
+              }
+            }
+          }
         }
       }
 

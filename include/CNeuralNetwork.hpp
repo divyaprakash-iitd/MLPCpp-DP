@@ -72,14 +72,17 @@ private:
       input_norm,  /*!< Normalization factors for network inputs */
       output_norm; /*!< Normalization factors for network outputs */
 
-  std::vector<mlpdouble> last_inputs; /*!< Inputs from previous lookup
-                                      operation. Evaluation of the network */
-  /*!< is skipped if current inputs are the same as the last inputs. */
-
   mlpdouble *ANN_outputs; /*!< Pointer to network outputs */
   std::vector<std::vector<mlpdouble>>
       dOutputs_dInputs; /*!< Network output derivatives w.r.t inputs */
+  std::vector<std::vector<std::vector<mlpdouble>>> d2Outputs_dInputs2;
 
+  mlpdouble Phi,        /*!< Activation function output value. */
+            Phi_prime,  /*!< Activation function derivative w.r.t. input. */
+            Phi_dprime; /*!< Activation function second derivative w.r.t. input. */
+
+  bool compute_gradient = false,        /*!< Evaluate network output gradients. */
+       compute_second_gradient = false; /*!< Evaluate network output second order gradients. */
   /*!
    * \brief Available activation function enumeration.
    */
@@ -325,23 +328,22 @@ public:
     }
 
     ANN_outputs = new mlpdouble[outputLayer->GetNNeurons()];
+
+    /* Size data structures used for first and second order derivative
+     * computation. */
     dOutputs_dInputs.resize(outputLayer->GetNNeurons());
-    for (auto iOutput = 0u; iOutput < outputLayer->GetNNeurons(); iOutput++)
+    d2Outputs_dInputs2.resize(outputLayer->GetNNeurons());
+    for (auto iOutput = 0u; iOutput < outputLayer->GetNNeurons(); iOutput++) {
       dOutputs_dInputs[iOutput].resize(inputLayer->GetNNeurons());
+      d2Outputs_dInputs2[iOutput].resize(inputLayer->GetNNeurons());
+      for (auto jInput = 0u; jInput < inputLayer->GetNNeurons(); jInput++) {
+        d2Outputs_dInputs2[iOutput][jInput].resize(inputLayer->GetNNeurons());
+      }
+    }
 
     for (auto iLayer = 0u; iLayer < n_hidden_layers + 2; iLayer++) {
       total_layers[iLayer]->SizeGradients(inputLayer->GetNNeurons());
     }
-  }
-
-  /*!
-   * \brief Size the std::vector of previous inputs.
-   * \param[in] n_inputs - Number of inputs.
-   */
-  void SizeInputs(unsigned long n_inputs) {
-    last_inputs.resize(n_inputs);
-    for (unsigned long iInput = 0; iInput < n_inputs; iInput++)
-      last_inputs[iInput] = 0.0;
   }
 
   /*!
@@ -365,259 +367,268 @@ public:
     return total_layers[iLayer]->GetNNeurons();
   }
 
+  void ComputeFirstOrderGradient(bool input) { compute_gradient = input; }
+
+  void ComputeSecondOrderGradient(bool input) {
+    compute_second_gradient = input;
+  }
+
   /*!
-   * \brief Evaluate the network.
-   * \param[in] inputs - Network input variable values.
-   * \param[in] compute_gradient - Compute the derivatives of the outputs wrt
-   * inputs.
+   * \brief Set the neuron output values of the input layer.
+   * \param[in] inputs - Vector containing non-normalized network inputs.
+   * \param[in] iNeuron - Input neuron index.
    */
-  void Predict(std::vector<mlpdouble> &inputs, bool compute_gradient = false) {
-    /*--- Evaluate MLP for given inputs ---*/
-
-    mlpdouble y = 0, dy_dx = 0; // Activation function output.
-
-    /* Normalize input */
-    for (auto iNeuron = 0u; iNeuron < inputLayer->GetNNeurons(); iNeuron++) {
-      mlpdouble x_norm =
-          (inputs[iNeuron] - input_norm[iNeuron].first) /
-          (input_norm[iNeuron].second - input_norm[iNeuron].first);
-      inputLayer->SetOutput(iNeuron, x_norm);
-
-      if (compute_gradient)
-        inputLayer->SetdYdX(
-            iNeuron, iNeuron,
-            1 / (input_norm[iNeuron].second - input_norm[iNeuron].first));
-    }
-    /* Skip evaluation process if current point is the same as during the
-     * previous evaluation */
-    mlpdouble alpha = 1.67326324;
-    mlpdouble lambda = 1.05070098;
-    /* Traverse MLP and compute inputs and outputs for the neurons in each layer
-     */
-    for (auto iLayer = 1u; iLayer < n_hidden_layers + 2; iLayer++) {
-      auto nNeurons_current =
-          total_layers[iLayer]->GetNNeurons(); // Neuron count of current layer
-      mlpdouble x;                             // Neuron input value
-
-      /* Compute and store input value for each neuron */
-      for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-        x = ComputeX(iLayer, iNeuron);
-        total_layers[iLayer]->SetInput(iNeuron, x);
-        if (compute_gradient) {
-          for (auto iInput = 0u; iInput < inputLayer->GetNNeurons(); iInput++) {
-            dy_dx = ComputedOutputdInput(iLayer, iNeuron, iInput);
-            total_layers[iLayer]->SetdYdX(iNeuron, iInput, dy_dx);
+  void ComputeInputLayer(std::vector<mlpdouble> &inputs, std::size_t iNeuron) {
+    mlpdouble x_norm = (inputs[iNeuron] - input_norm[iNeuron].first) /
+                       (input_norm[iNeuron].second - input_norm[iNeuron].first);
+    inputLayer->SetOutput(iNeuron, x_norm);
+    if (compute_gradient) {
+      for (auto jInput = 0u; jInput < inputLayer->GetNNeurons(); jInput++) {
+        if (jInput == iNeuron) {
+          inputLayer->SetdYdX(
+              iNeuron, jInput,
+              1 / (input_norm[iNeuron].second - input_norm[iNeuron].first));
+        } else {
+          inputLayer->SetdYdX(iNeuron, jInput, 0.0);
+        }
+        if (compute_second_gradient)
+          for (auto kInput = 0u; kInput < inputLayer->GetNNeurons(); kInput++) {
+            inputLayer->Setd2YdX2(iNeuron, jInput, kInput, 0.0);
           }
+      }
+    }
+  }
+
+  /*!
+   * \brief Evaluate activation function applied to the current layer.
+   * \param[in] iLayer - Current layer index.
+   * \param[in] input - Activation function input value.
+   */
+  void ActivationFunction(std::size_t iLayer, mlpdouble input) {
+    /* Evaluating the activation function sets the value of the class parameter
+     * Phi. In case of gradient computation, Phi_prime and/or Phi_dprime are set
+     * as well, corresponding to the first and second analytical derivative of
+     * the activation function w.r.t. its input respectively. */
+
+    /* Constants used for various activation functions. */
+    mlpdouble exp_x, tanh_x, alpha = 1.67326324, lambda = 1.05070098,
+                             gelu_c = 1.702;
+
+    switch (activation_function_types[iLayer]) {
+    case ENUM_ACTIVATION_FUNCTION::ELU:
+      if (input > 0) {
+        Phi = input;
+        if (compute_gradient) {
+          Phi_prime = 1.0;
+          if (compute_second_gradient)
+            Phi_dprime = 0.0;
+        }
+      } else {
+        exp_x = exp(input);
+        Phi = exp_x - 1;
+        if (compute_gradient) {
+          Phi_prime = exp_x;
+          if (compute_second_gradient)
+            Phi_dprime = exp_x;
         }
       }
-
-      /* Compute and store neuron output based on activation function */
-      switch (activation_function_types[iLayer]) {
-      case ENUM_ACTIVATION_FUNCTION::ELU:
-        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-          x = total_layers[iLayer]->GetInput(iNeuron);
-          if (x > 0) {
-            y = x;
-            if (compute_gradient)
-              dy_dx = 1.0;
-          } else {
-            y = exp(x) - 1;
-            if (compute_gradient)
-              dy_dx = exp(x);
-          }
-          total_layers[iLayer]->SetOutput(iNeuron, y);
-          if (compute_gradient) {
-            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                 iInput++) {
-              total_layers[iLayer]->SetdYdX(
-                  iNeuron, iInput,
-                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-            }
-          }
+      break;
+    case ENUM_ACTIVATION_FUNCTION::LINEAR:
+      Phi = input;
+      if (compute_gradient) {
+        Phi_prime = 1.0;
+        if (compute_second_gradient)
+          Phi_dprime = 0.0;
+      }
+      break;
+    case ENUM_ACTIVATION_FUNCTION::EXPONENTIAL:
+      Phi = exp(input);
+      if (compute_gradient) {
+        Phi_prime = Phi;
+        if (compute_second_gradient)
+          Phi_dprime = Phi;
+      }
+      break;
+    case ENUM_ACTIVATION_FUNCTION::RELU:
+      if (input > 0) {
+        Phi = input;
+        if (compute_gradient)
+          Phi_prime = 1.0;
+      } else {
+        Phi = 0.0;
+        if (compute_gradient)
+          Phi_prime = 0.0;
+      }
+      if (compute_second_gradient)
+        Phi_dprime = 0.0;
+      break;
+    case ENUM_ACTIVATION_FUNCTION::SWISH:
+      Phi = input / (1 + exp(-input));
+      if (compute_gradient) {
+        exp_x = exp(input);
+        Phi_prime = exp_x * (input + exp_x + 1) / pow(exp_x + 1, 2);
+        if (compute_second_gradient)
+          Phi_dprime =
+              exp_x * (-exp_x * (input - 2) + input + 2) / pow(exp_x + 1, 3);
+      }
+      break;
+    case ENUM_ACTIVATION_FUNCTION::TANH:
+      tanh_x = tanh(input);
+      Phi = tanh_x;
+      if (compute_gradient) {
+        Phi_prime = 1 / pow(cosh(input), 2);
+        if (compute_second_gradient)
+          Phi_dprime = -2 * tanh_x * 1 / (pow(cosh(input), 2));
+      }
+      break;
+    case ENUM_ACTIVATION_FUNCTION::SIGMOID:
+      exp_x = exp(-input);
+      Phi = 1.0 / (1 + exp_x);
+      if (compute_gradient) {
+        Phi_prime = exp_x / pow(exp_x + 1, 2);
+        if (compute_second_gradient) {
+          exp_x = exp(input);
+          Phi_dprime = -(exp_x * (exp_x - 1)) / pow(exp_x + 1, 3);
         }
-        break;
-      case ENUM_ACTIVATION_FUNCTION::LINEAR:
-        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-          x = total_layers[iLayer]->GetInput(iNeuron);
-          y = x;
-          total_layers[iLayer]->SetOutput(iNeuron, y);
-          if (compute_gradient) {
-            dy_dx = 1.0;
-            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                 iInput++) {
-              total_layers[iLayer]->SetdYdX(
-                  iNeuron, iInput,
-                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-            }
-          }
+      }
+      break;
+    case ENUM_ACTIVATION_FUNCTION::SELU:
+      if (input > 0) {
+        Phi = lambda * input;
+        if (compute_gradient) {
+          Phi_prime = lambda;
+          if (compute_second_gradient)
+            Phi_dprime = 0.0;
         }
-        break;
-      case ENUM_ACTIVATION_FUNCTION::EXPONENTIAL:
-        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-          x = total_layers[iLayer]->GetInput(iNeuron);
-          y = exp(x);
-          total_layers[iLayer]->SetOutput(iNeuron, y);
-          if (compute_gradient) {
-            dy_dx = 1.0;
-            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                 iInput++) {
-              total_layers[iLayer]->SetdYdX(
-                  iNeuron, iInput,
-                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-            }
-          }
+      } else {
+        exp_x = exp(input);
+        Phi = lambda * alpha * (exp_x - 1);
+        if (compute_gradient) {
+          Phi_prime = Phi + lambda * alpha;
+          if (compute_second_gradient)
+            Phi_dprime = Phi_prime;
         }
-        break;
-      case ENUM_ACTIVATION_FUNCTION::RELU:
-        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-          x = total_layers[iLayer]->GetInput(iNeuron);
-          if (x > 0) {
-            y = x;
-            if (compute_gradient)
-              dy_dx = 1.0;
-          } else {
-            y = 0.0;
-            if (compute_gradient)
-              dy_dx = 0.0;
-          }
-          total_layers[iLayer]->SetOutput(iNeuron, y);
-          if (compute_gradient) {
-            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                 iInput++) {
-              total_layers[iLayer]->SetdYdX(
-                  iNeuron, iInput,
-                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-            }
-          }
-        }
-        break;
-      case ENUM_ACTIVATION_FUNCTION::SWISH:
-        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-          x = total_layers[iLayer]->GetInput(iNeuron);
-          y = x / (1 + exp(-x));
-          total_layers[iLayer]->SetOutput(iNeuron, y);
-          if (compute_gradient) {
-            dy_dx = exp(x) * (x + exp(x) + 1) / pow(exp(x) + 1, 2);
-            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                 iInput++) {
-              total_layers[iLayer]->SetdYdX(
-                  iNeuron, iInput,
-                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-            }
-          }
-        }
-        break;
-      case ENUM_ACTIVATION_FUNCTION::TANH:
-        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-          x = total_layers[iLayer]->GetInput(iNeuron);
-          y = tanh(x);
-          total_layers[iLayer]->SetOutput(iNeuron, y);
-          if (compute_gradient) {
-            dy_dx = 1 / pow(cosh(x), 2);
-            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                 iInput++) {
-              total_layers[iLayer]->SetdYdX(
-                  iNeuron, iInput,
-                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-            }
-          }
-        }
-        break;
-      case ENUM_ACTIVATION_FUNCTION::SIGMOID:
-        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-          x = total_layers[iLayer]->GetInput(iNeuron);
-          y = 1.0 / (1 + exp(-x));
-          total_layers[iLayer]->SetOutput(iNeuron, y);
-          if (compute_gradient) {
-            dy_dx = exp(-x) / pow(exp(-x) + 1, 2);
-            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                 iInput++) {
-              total_layers[iLayer]->SetdYdX(
-                  iNeuron, iInput,
-                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-            }
-          }
-        }
-        break;
-      case ENUM_ACTIVATION_FUNCTION::SELU:
-        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-          x = total_layers[iLayer]->GetInput(iNeuron);
-          if (x > 0.0) {
-            y = lambda * x;
-            if (compute_gradient)
-              dy_dx = lambda;
-          } else {
-            y = lambda * alpha * (exp(x) - 1);
-            if (compute_gradient)
-              dy_dx = lambda * alpha * exp(x);
-          }
-          total_layers[iLayer]->SetOutput(iNeuron, y);
-          if (compute_gradient) {
-            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                 iInput++) {
-              total_layers[iLayer]->SetdYdX(
-                  iNeuron, iInput,
-                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-            }
-          }
-        }
-        break;
-      case ENUM_ACTIVATION_FUNCTION::GELU:
-        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-          x = total_layers[iLayer]->GetInput(iNeuron);
-
-          y = x / (1 + exp(-1.702*x));
-          total_layers[iLayer]->SetOutput(iNeuron, y);
-          if (compute_gradient) {
-            dy_dx = 0.5 *
-                    (tanh(0.0356774 * pow(x, 3) + 0.797885 * x) +
-                     (0.107032 * pow(x, 3) + 0.797885 * x) * pow(cosh(x), -2) *
-                         (0.0356774 * pow(x, 3) + 0.797885 * x));
-            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                 iInput++) {
-              total_layers[iLayer]->SetdYdX(
-                  iNeuron, iInput,
-                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-            }
-          }
-        }
-        break;
-      case ENUM_ACTIVATION_FUNCTION::NONE:
-        for (auto iNeuron = 0u; iNeuron < nNeurons_current; iNeuron++) {
-          y = 0.0;
-          total_layers[iLayer]->SetOutput(iNeuron, y);
-          if (compute_gradient) {
-            dy_dx = 0.0;
-            for (auto iInput = 0u; iInput < inputLayer->GetNNeurons();
-                 iInput++) {
-              total_layers[iLayer]->SetdYdX(
-                  iNeuron, iInput,
-                  dy_dx * total_layers[iLayer]->GetdYdX(iNeuron, iInput));
-            }
-          }
-        }
-        break;
-      default:
-        break;
-      } // activation_function_types
+      }
+      break;
+    case ENUM_ACTIVATION_FUNCTION::GELU:
+      Phi = 0.5 * input *
+            (1 + tanh(0.7978845608028654 * (input + 0.044715 * pow(input, 3))));
+      if (compute_gradient) {
+        exp_x = exp(-gelu_c * input);
+        Phi_prime = exp_x * (gelu_c * input + exp_x + 1) / pow(exp_x + 1, 2);
+        if (compute_second_gradient)
+          Phi_dprime = input * ((5.79361 * pow(exp_x, 2) / pow(exp_x + 1, 3)) -
+                                (2.8968 * exp_x / pow(exp_x + 1, 2))) +
+                       3.404 * exp_x / pow(exp_x + 1, 2);
+      }
+      break;
+    case ENUM_ACTIVATION_FUNCTION::NONE:
+      Phi = 0.0;
+      if (compute_gradient) {
+        Phi_prime = 0.0;
+        if (compute_second_gradient)
+          Phi_dprime = 0.0;
+      }
+      break;
+    default:
+      break;
     }
+  }
+
+  /*!
+   * \brief De-normalize the network outputs based on output normalization
+   * values.
+   */
+  void DeNormalizeOutputs() {
     /* Compute and de-normalize MLP output */
     for (auto iNeuron = 0u; iNeuron < outputLayer->GetNNeurons(); iNeuron++) {
       mlpdouble y_norm = outputLayer->GetOutput(iNeuron);
-      y = y_norm * (output_norm[iNeuron].second - output_norm[iNeuron].first) +
-          output_norm[iNeuron].first;
+      mlpdouble output_scale =
+          output_norm[iNeuron].second - output_norm[iNeuron].first;
+
+      mlpdouble Y_out = y_norm * output_scale + output_norm[iNeuron].first;
+
+      /* Storing output value */
+      ANN_outputs[iNeuron] = Y_out;
+
+      /* Scale first and second derivatives */
       if (compute_gradient) {
-        dy_dx = (output_norm[iNeuron].second - output_norm[iNeuron].first);
-        for (auto iInput = 0u; iInput < inputLayer->GetNNeurons(); iInput++) {
-          outputLayer->SetdYdX(iNeuron, iInput,
-                               dy_dx * outputLayer->GetdYdX(iNeuron, iInput));
-          dOutputs_dInputs[iNeuron][iInput] =
-              outputLayer->GetdYdX(iNeuron, iInput);
+        for (auto jInput = 0u; jInput < inputLayer->GetNNeurons(); jInput++) {
+          outputLayer->SetdYdX(iNeuron, jInput,
+                               output_scale *
+                                   outputLayer->GetdYdX(iNeuron, jInput));
+          dOutputs_dInputs[iNeuron][jInput] =
+              outputLayer->GetdYdX(iNeuron, jInput);
+
+          mlpdouble input_scale_j =
+              input_norm[jInput].second - input_norm[jInput].first;
+          if (compute_second_gradient) {
+            for (auto kInput = 0u; kInput < inputLayer->GetNNeurons();
+                 kInput++) {
+              mlpdouble input_scale_k =
+                  input_norm[kInput].second - input_norm[kInput].first;
+              outputLayer->Setd2YdX2(
+                  iNeuron, jInput, kInput,
+                  output_scale *
+                      outputLayer->Getd2YdX2(iNeuron, jInput, kInput));
+              d2Outputs_dInputs2[iNeuron][jInput][kInput] =
+                  outputLayer->Getd2YdX2(iNeuron, jInput, kInput);
+            }
+          }
         }
       }
-      /* Storing output value */
-      ANN_outputs[iNeuron] = y;
     }
+  }
+
+  /*!
+   * \brief Evaluate the network based on dimensionalized inputs.
+   * \param[in] inputs - Vector containing non-normalized network inputs.
+   */
+  void Predict(std::vector<mlpdouble> &inputs) {
+
+    for (auto iLayer = 0u; iLayer < n_hidden_layers + 2; iLayer++) {
+      for (auto iNeuron = 0u; iNeuron < total_layers[iLayer]->GetNNeurons();
+           iNeuron++) {
+        if (total_layers[iLayer]->IsInput()) {
+          ComputeInputLayer(inputs, iNeuron);
+        } else {
+          /* Compute activation function input value. */
+          mlpdouble X = ComputeX(iLayer, iNeuron);
+
+          /* Evaluate activation function. */
+          ActivationFunction(iLayer, X);
+
+          /* Store activation function output in current neuron. */
+          mlpdouble Yi = Phi;
+          total_layers[iLayer]->SetOutput(iNeuron, Yi);
+
+          /* Compute first and/or second order derivatives. */
+          if (compute_gradient) {
+            for (auto jInput = 0u; jInput < inputLayer->GetNNeurons();
+                 jInput++) {
+              mlpdouble psi_j = ComputePsi(iLayer, iNeuron, jInput);
+              mlpdouble dYi_dIj = psi_j * Phi_prime;
+              total_layers[iLayer]->SetdYdX(iNeuron, jInput, dYi_dIj);
+              if (compute_second_gradient) {
+                for (auto kInput = 0u; kInput < inputLayer->GetNNeurons();
+                     kInput++) {
+                  mlpdouble psi_k = ComputePsi(iLayer, iNeuron, kInput);
+                  mlpdouble chi = ComputeChi(iLayer, iNeuron, jInput, kInput);
+                  mlpdouble d2Yi_dIjdIk =
+                      Phi_dprime * psi_j * psi_k + Phi_prime * chi;
+
+                  total_layers[iLayer]->Setd2YdX2(iNeuron, jInput, kInput,
+                                                  d2Yi_dIjdIk);
+                } // kInput
+              }   // compute_second_gradient
+            }     // jInput
+          }       // compute_gradient
+        }         // is_input_layer
+      }           // iNeuron
+    }             // iLayer
+
+    // De-normalize the network outputs and gradients.
+    DeNormalizeOutputs();
   }
 
   /*!
@@ -715,6 +726,17 @@ public:
   }
 
   /*!
+   * \brief Get network output second derivative w.r.t specific inputs.
+   * \param[in] iOutput - output variable index.
+   * \param[in] iInput - first input variable index.
+   * \param[in] jInput - second input variable index.
+   * \returns Output second derivative w.r.t inputs.
+   */
+  mlpdouble Getd2OutputdInput2(std::size_t iOutput, std::size_t iInput,
+                               std::size_t jInput) const {
+    return d2Outputs_dInputs2[iOutput][iInput][jInput];
+  }
+  /*!
    * \brief Set the activation function array size.
    * \param[in] n_layers - network layer count.
    */
@@ -739,6 +761,45 @@ public:
     }
     return x;
   }
+
+  /*!
+   * \brief Compute the weighted sum of the neuron output derivatives of the
+   * previous layer. \param[in] iLayer - Current network layer index. \param[in]
+   * iNeuron - Layer neuron index. \param[in] jInput - Input variable index used
+   * for derivative. \returns Weighted sum of prefious layer derivatives w.r.t.
+   * input variable.
+   */
+  mlpdouble ComputePsi(std::size_t iLayer, std::size_t iNeuron,
+                       std::size_t jInput) const {
+    mlpdouble psi = 0;
+    for (auto jNeuron = 0u; jNeuron < total_layers[iLayer - 1]->GetNNeurons();
+         jNeuron++) {
+      psi += weights_mat[iLayer - 1][iNeuron][jNeuron] *
+             total_layers[iLayer - 1]->GetdYdX(jNeuron, jInput);
+    }
+    return psi;
+  }
+
+  /*!
+   * \brief Compute the weighted sum of the neuron output second derivatives of
+   * the previous layer. \param[in] iLayer - Current network layer index.
+   * \param[in] iNeuron - Layer neuron index.
+   * \param[in] jInput - First input variable index used for derivative.
+   * \param[in] kInput - Second input variable index used for derivative.
+   * \returns Weighted sum of prefious layer second derivatives w.r.t. input
+   * variables.
+   */
+  mlpdouble ComputeChi(std::size_t iLayer, std::size_t iNeuron,
+                       std::size_t jInput, std::size_t kInput) const {
+    mlpdouble chi = 0;
+    for (auto jNeuron = 0u; jNeuron < total_layers[iLayer - 1]->GetNNeurons();
+         jNeuron++) {
+      chi += weights_mat[iLayer - 1][iNeuron][jNeuron] *
+             total_layers[iLayer - 1]->Getd2YdX2(jNeuron, jInput, kInput);
+    }
+    return chi;
+  }
+
   mlpdouble ComputedOutputdInput(std::size_t iLayer, std::size_t iNeuron,
                                  std::size_t iInput) const {
     mlpdouble doutput_dinput = 0;

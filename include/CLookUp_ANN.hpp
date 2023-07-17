@@ -184,7 +184,7 @@ public:
    * w.r.t. inputs. \returns Within output normalization range.
    */
   unsigned long PredictANN(
-      MLPToolbox::CIOMap *input_output_map, std::vector<mlpdouble> &inputs,
+      MLPToolbox::CIOMap *input_output_map, const std::vector<mlpdouble> &inputs,
       std::vector<mlpdouble *> &outputs,
       const std::vector<std::vector<mlpdouble *>> *doutputs_dinputs = nullptr,
       std::vector<std::vector<std::vector<mlpdouble *>>> *d2outputs_dinputs2 =

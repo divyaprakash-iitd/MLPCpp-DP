@@ -218,7 +218,7 @@ public:
    * \return std::vector with call inputs in the correct order of the loaded MLP
    */
   std::vector<mlpdouble> GetMLPInputs(std::size_t i_Map,
-                                      std::vector<mlpdouble> &inputs) const {
+                                      const std::vector<mlpdouble> &inputs) const {
     std::vector<mlpdouble> MLP_input;
     MLP_input.resize(Input_Map[i_Map].size());
 

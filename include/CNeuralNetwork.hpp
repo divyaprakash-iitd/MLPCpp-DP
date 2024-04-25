@@ -511,8 +511,7 @@ public:
       }
       break;
     case ENUM_ACTIVATION_FUNCTION::GELU:
-      Phi = 0.5 * input *
-            (1 + tanh(0.7978845608028654 * (input + 0.044715 * pow(input, 3))));
+      Phi = 0.5 * input * (1 + erf(input / sqrt(2)));
       if (compute_gradient) {
         exp_x = exp(-gelu_c * input);
         Phi_prime = exp_x * (gelu_c * input + exp_x + 1) / pow(exp_x + 1, 2);

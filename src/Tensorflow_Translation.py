@@ -27,19 +27,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import tensorflow as tf
 
-
-def Translate_Tensorflow_MLP(file_out, input_names, output_names, model, input_min=[], input_max=[], output_min=[], output_max=[]):
+def Translate_Tensorflow_MLP(file_out:str, input_names:list[str], output_names:list[str], model:tf.keras.models.Sequential, \
+                             scaler_input:str="minmax", input_norm_1=[], input_norm_2=[], \
+                             scaler_output:str="minmax", output_norm_1=[], output_norm_2=[]):
     # This function writes the MLP to a format which can be read by the SU2 MLP import tool
     # Inputs:
     # - file_out: output file name without extension
     # - input_names: list of strings with the variable names of the MLP input(s)
     # - output names: list of strings with the variable names of the MLP output(s)
     # - model: tensorflow.keras.model; the trained model
-    # - input_min: lower normalization values for the input
-    # - input_max: upper normalization values for the input
-    # - output_min: lower normalization values for the output
-    # - output_max: upper normalization values for the output
+    # - scaler_input: scaler method used to normalize the input data (minmax, standard, or robust)
+    # - input_norm_1: lower normalization values for the input
+    # - input_norm_2: upper normalization values for the input
+    # - scaler_output: scaler method used to normalize the output training data (minmax, standard, or robust)
+    # - output_norm_1: lower normalization values for the output
+    # - output_norm_2: upper normalization values for the output
 
     # MLP config
     model_config = model.get_config()
@@ -55,15 +59,15 @@ def Translate_Tensorflow_MLP(file_out, input_names, output_names, model, input_m
     if not n_outputs == len(output_names):
         raise Exception("Number of provided output names unequal to the number of outputs in the model")
 
-    if len(input_max) != len(input_min):
+    if len(input_norm_2) != len(input_norm_1):
         raise Exception("Upper and lower input normalizations should have the same length")
-    if len(output_max) != len(output_min):
+    if len(output_norm_2) != len(output_norm_1):
         raise Exception("Upper and lower output normalizations should have the same length")
 
-    if len(input_max) > 0 and len(input_min) != n_inputs:
+    if len(input_norm_2) > 0 and len(input_norm_1) != n_inputs:
         raise Exception("Input normalization not provided for all inputs")
 
-    if len(output_max) > 0 and len(output_min) != n_outputs:
+    if len(output_norm_2) > 0 and len(output_norm_1) != n_outputs:
         raise Exception("Output normalization not provided for all outputs")
 
 
@@ -102,19 +106,23 @@ def Translate_Tensorflow_MLP(file_out, input_names, output_names, model, input_m
     for input in input_names:
         fid.write(input + '\n')
     
-    if len(input_min) > 0:
+    fid.write("\n[input regularization method]\n%s\n" % scaler_input)
+
+    if len(input_norm_1) > 0:
         fid.write('\n[input normalization]\n')
         for i in range(len(input_names)):
-            fid.write('%+.16e\t%+.16e\n' % (input_min[i], input_max[i]))
+            fid.write('%+.16e\t%+.16e\n' % (input_norm_1[i], input_norm_2[i]))
     
     fid.write('\n[output names]\n')
     for output in output_names:
         fid.write(output+'\n')
     
-    if len(output_min) > 0:
+    fid.write("\n[output regularization method]\n%s\n" % scaler_output)
+
+    if len(output_norm_1) > 0:
         fid.write('\n[output normalization]\n')
         for i in range(len(output_names)):
-            fid.write('%+.16e\t%+.16e\n' % (output_min[i], output_max[i]))
+            fid.write('%+.16e\t%+.16e\n' % (output_norm_1[i], output_norm_2[i]))
 
     fid.write("\n</header>\n")
     # Writing the weights of each layer

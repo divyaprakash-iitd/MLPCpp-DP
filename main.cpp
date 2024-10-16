@@ -30,6 +30,7 @@ code.
 #include <iostream>
 #include <string>
 #include <vector>
+#include <fstream>
 /*--- Include the look-up MLP class ---*/
 #include "include/CLookUp_ANN.hpp"
 #include <chrono>
@@ -43,8 +44,7 @@ int main() {
 
   /*--- First specify an array of MLP input file names (preprocessing) ---*/
   string input_filenames[] = {
-      "MLP_1.mlp",
-      "MLP_2.mlp"}; /*!< String array containing MLP input file names. */
+      "MLP_test.mlp"}; /*!< String array containing MLP input file names. */
   unsigned short nMLPs = sizeof(input_filenames) / sizeof(string);
 
   /*--- Generate a collection of MLPs with the architectures described in the
@@ -61,16 +61,13 @@ int main() {
   /*--- Size the controlling variable vector and fill in the variable names
    * (should correspond to the controlling variable names in any of the loaded
    * MLPs, but the order is irrelevant) ---*/
-  input_names.resize(3);
-  input_names[0] = "CV_1";
-  input_names[1] = "CV_2";
-  input_names[2] = "CV_3";
+  input_names.resize(2);
+  input_names[0] = "u";
+  input_names[1] = "v";;
 
   /*--- Size the output variable vector and set the variable names ---*/
-  output_names.resize(3);
-  output_names[0] = "Output_2";
-  output_names[1] = "Output_3";
-  output_names[2] = "Output_6";
+  output_names.resize(1);
+  output_names[0] = "y";
 
   /*--- Generate the input-output map and pair the loaded MLP's with the input
    * and output variables of the lookup operation ---*/
@@ -117,38 +114,52 @@ int main() {
     }
   }
   /*--- Set pointer to output variables ---*/
-  double val_output_2, val_output_3, val_output_6;
-  MLP_outputs[0] = &val_output_2;
-  MLP_outputs[1] = &val_output_3;
-  MLP_outputs[2] = &val_output_6;
+  double val_output;
+  MLP_outputs[0] = &val_output;
 
   /* PREPROCESSING END */
 
   /* Step 3: Evaluate MLPs (in iterative process)*/
 
-  double val_cv_1 = -0.575;
-  double val_cv_2 = 0;
-  double val_cv_3 = 0.0144;
-  auto start = chrono::high_resolution_clock::now();
-  while (val_cv_1 < 0.0) {
-    MLP_inputs[0] = val_cv_1;
-    MLP_inputs[1] = val_cv_2;
-    MLP_inputs[2] = val_cv_3;
+  ifstream input_data_file;
+  ofstream output_data_file;
+  string line, word;
+  input_data_file.open("reference_data.csv");
+  output_data_file.open("predicted_data.csv");
+  getline(input_data_file, line);
+  output_data_file << line << endl;
 
-    /*--- Call the PredictANN function to evaluate the relevant MLPs for the
-     * look-up process specified through the input-output map and set the output
-     * values. ---*/
-    auto inside =
-        ANN_test.PredictANN(&iomap, MLP_inputs, MLP_outputs,
-                            &dOutputs_dInputs_refs, &d2Outputs_dInputs2_refs);
-    cout << val_cv_1 << ", " << val_output_2 << ", " << val_output_3 << ", "
-         << val_output_6 << ", " << dOutputs_dInputs[0][0] << ", "
-         << d2Outputs_dInputs2[0][0][0] << endl;
-    ;
+  cout << "Derivative finite-differences, Analytical derivative"<<endl;
+  
+  while (getline(input_data_file, line)) {
+    stringstream line_stream(line);
+    line_stream >> word;
+    MLP_inputs[0] = stod(word);
+    line_stream >> word;
+    MLP_inputs[1] = stod(word);
 
-    val_cv_1 += 0.01;
+    ANN_test.PredictANN(&iomap, MLP_inputs, MLP_outputs, &dOutputs_dInputs_refs, &d2Outputs_dInputs2_refs);
+
+    output_data_file << scientific << MLP_inputs[0] << "\t"
+                     << scientific << MLP_inputs[1] << "\t"
+                     << scientific << val_output << endl;
+
+    /* Validate gradient computation */
+    double delta_CV = 1e-5;
+    double val_output_c = val_output;
+    double val_output_p, val_output_m;
+    MLP_inputs[0] += delta_CV;
+    ANN_test.PredictANN(&iomap, MLP_inputs, MLP_outputs);
+    val_output_p = val_output;
+    MLP_inputs[0] -= 2*delta_CV;
+    ANN_test.PredictANN(&iomap, MLP_inputs, MLP_outputs);
+    val_output_m = val_output;
+    double dy_du_fd = (val_output_p - val_output_m) / (2*delta_CV);
+    double d2y_du2_fd = (val_output_p - 2 * val_output_c + val_output_m) / (delta_CV*delta_CV);
+    cout << scientific << dOutputs_dInputs[0][0] << "\t" << scientific << dy_du_fd << endl;
+    //cout << scientific << d2Outputs_dInputs2[0][0][0] << "\t" << scientific << d2y_du2_fd << endl;
   }
-  auto end = chrono::high_resolution_clock::now();
-  auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-  cout << duration.count() << endl;
+  input_data_file.close();
+  output_data_file.close();
+  
 }

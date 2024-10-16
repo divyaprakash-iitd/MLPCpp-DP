@@ -38,6 +38,7 @@
 
 #include "CLayer.hpp"
 #include "variable_def.hpp"
+#include "option_maps.hpp"
 
 namespace MLPToolbox {
 class CNeuralNetwork {
@@ -120,7 +121,8 @@ private:
   std::vector<std::string>
       activation_function_names; /*!< Activation function name for each layer in
                                     the network. */
-
+  ENUM_SCALING_FUNCTIONS input_reg_method {ENUM_SCALING_FUNCTIONS::MINMAX},
+                         output_reg_method {ENUM_SCALING_FUNCTIONS::MINMAX};
 public:
   ~CNeuralNetwork() {
     delete inputLayer;
@@ -204,6 +206,24 @@ public:
   }
 
   /*!
+   * \brief Define the regularization method used to normalize the inputs before feeding them to the network.
+   * \param[in] reg_method_input - regularization method (minmax, standard, or robust).
+   */
+  void SetInputRegularization(ENUM_SCALING_FUNCTIONS reg_method_input) {
+    input_reg_method = reg_method_input;
+    return;
+  }
+
+  /*!
+   * \brief Define the regularization method used to normalize the training data before training. 
+   * \param[in] reg_method_input - regularization method (minmax, standard, or robust).
+   */
+  void SetOutputRegularization(ENUM_SCALING_FUNCTIONS reg_method_input) {
+    output_reg_method = reg_method_input;
+    return;
+  }
+
+  /*!
    * \brief Display the network architecture in the terminal.
    */
   void DisplayNetwork() const {
@@ -218,14 +238,41 @@ public:
     std::cout << "|" << std::left << std::setw(display_width - 1)
               << "Input Layer Information:"
               << "|" << std::endl;
+    
+    
+    std::string val_disp_1, val_disp_2, label_disp_1, label_disp_2, norm_method;
+    switch (input_reg_method)
+    {
+    case ENUM_SCALING_FUNCTIONS::MINMAX:
+      label_disp_1 = "Lower limit";
+      label_disp_2 = "Upper limit";
+      norm_method = "minimum-maximum";
+      break;
+    case ENUM_SCALING_FUNCTIONS::STANDARD:
+      label_disp_1 = "Mean";
+      label_disp_2 = "std";
+      norm_method = "mean-standard deviation";
+      break;
+    case ENUM_SCALING_FUNCTIONS::ROBUST:
+      label_disp_1 = "Mean";
+      label_disp_2 = "IQ range";
+      norm_method = "Quantile range";
+      break;
+    default:
+      break;
+    }
+    std::cout << "|" << std::left << std::setw(column_width)
+              << "Input Normalization:";
+    std::cout << std::setfill(' ') << std::right << std::setw(column_width) << norm_method
+              << std::setfill(' ') << std::setw(column_width) << std::right << "|" << std::endl;
     std::cout << "+" << std::setfill('-') << std::setw(display_width)
               << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
     std::cout << "|" << std::left << std::setw(column_width)
-              << "Input Variable:"
-              << "|" << std::left << std::setw(column_width) << "Lower limit:"
-              << "|" << std::left << std::setw(column_width) << "Upper limit:"
-              << "|" << std::endl;
+              << "Input Variable:";
+    std::cout << "|" << std::left << std::setw(column_width) << label_disp_1
+              << "|" << std::left << std::setw(column_width) << label_disp_2
+              << "|" << std::endl;      
     std::cout << "+" << std::setfill('-') << std::setw(display_width)
               << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
@@ -265,6 +312,26 @@ public:
     std::cout << std::setfill(' ');
 
     /*--- Output layer information ---*/
+    switch (output_reg_method)
+    {
+    case ENUM_SCALING_FUNCTIONS::MINMAX:
+      label_disp_1 = "Lower limit";
+      label_disp_2 = "Upper limit";
+      norm_method = "minimum-maximum";
+      break;
+    case ENUM_SCALING_FUNCTIONS::STANDARD:
+      label_disp_1 = "Mean";
+      label_disp_2 = "std";
+      norm_method = "mean-standard deviation";
+      break;
+    case ENUM_SCALING_FUNCTIONS::ROBUST:
+      label_disp_1 = "Mean";
+      label_disp_2 = "IQ range";
+      norm_method = "Quantile range";
+      break;
+    default:
+      break;
+    }
     std::cout << "|" << std::left << std::setw(display_width - 1)
               << "Output Layer Information:"
               << "|" << std::endl;
@@ -272,9 +339,9 @@ public:
               << std::right << "+" << std::endl;
     std::cout << std::setfill(' ');
     std::cout << "|" << std::left << std::setw(column_width)
-              << "Output Variable:"
-              << "|" << std::left << std::setw(column_width) << "Lower limit:"
-              << "|" << std::left << std::setw(column_width) << "Upper limit:"
+              << "Output Variable:";
+    std::cout << "|" << std::left << std::setw(column_width) << label_disp_1
+              << "|" << std::left << std::setw(column_width) << label_disp_2
               << "|" << std::endl;
     std::cout << "+" << std::setfill('-') << std::setw(display_width)
               << std::right << "+" << std::endl;
@@ -379,15 +446,17 @@ public:
    * \param[in] iNeuron - Input neuron index.
    */
   void ComputeInputLayer(std::vector<mlpdouble> &inputs, std::size_t iNeuron) {
-    mlpdouble x_norm = (inputs[iNeuron] - input_norm[iNeuron].first) /
-                       (input_norm[iNeuron].second - input_norm[iNeuron].first);
+
+    /* Compute normalized input value according to regularizer. */
+    mlpdouble x_norm = NormalizeInput(inputs[iNeuron], iNeuron);
+
     inputLayer->SetOutput(iNeuron, x_norm);
     if (compute_gradient) {
       for (auto jInput = 0u; jInput < inputLayer->GetNNeurons(); jInput++) {
         if (jInput == iNeuron) {
           inputLayer->SetdYdX(
               iNeuron, jInput,
-              1 / (input_norm[iNeuron].second - input_norm[iNeuron].first));
+              1 / GetRegularizationScale(iNeuron, true));
         } else {
           inputLayer->SetdYdX(iNeuron, jInput, 0.0);
         }
@@ -542,10 +611,9 @@ public:
     /* Compute and de-normalize MLP output */
     for (auto iNeuron = 0u; iNeuron < outputLayer->GetNNeurons(); iNeuron++) {
       mlpdouble y_norm = outputLayer->GetOutput(iNeuron);
-      mlpdouble output_scale =
-          output_norm[iNeuron].second - output_norm[iNeuron].first;
+      mlpdouble output_scale = GetRegularizationScale(iNeuron, false);
 
-      mlpdouble Y_out = y_norm * output_scale + output_norm[iNeuron].first;
+      mlpdouble Y_out = DimensionalizeOutput(y_norm, iNeuron);
 
       /* Storing output value */
       ANN_outputs[iNeuron] = Y_out;
@@ -804,6 +872,108 @@ public:
                         total_layers[iLayer - 1]->GetdYdX(jNeuron, iInput);
     }
     return doutput_dinput;
+  }
+
+  mlpdouble NormalizeInput(mlpdouble val_input_dim, std::size_t iInput) const {
+    mlpdouble val_norm_input;
+    switch(input_reg_method)
+    {
+    case ENUM_SCALING_FUNCTIONS::MINMAX:
+      val_norm_input = (val_input_dim - input_norm[iInput].first) / (input_norm[iInput].second - input_norm[iInput].first);
+      break;
+    case ENUM_SCALING_FUNCTIONS::STANDARD:
+    case ENUM_SCALING_FUNCTIONS::ROBUST:
+      val_norm_input= (val_input_dim - input_norm[iInput].first) / input_norm[iInput].second;
+      break;
+    default:
+      break;
+    }
+    return val_norm_input;
+  }
+
+  mlpdouble GetRegularizationScale(std::size_t iInput, bool is_input=true) const {
+    switch(input_reg_method)
+    {
+    case ENUM_SCALING_FUNCTIONS::MINMAX:
+      if (is_input) {
+        return input_norm[iInput].second - input_norm[iInput].first;
+      } else {
+        return output_norm[iInput].second - output_norm[iInput].first;
+      }
+      break;
+    case ENUM_SCALING_FUNCTIONS::STANDARD:
+    case ENUM_SCALING_FUNCTIONS::ROBUST:
+      if (is_input) {
+        return input_norm[iInput].second;
+      } else {
+        return output_norm[iInput].second;
+      }
+      break;
+    default:
+      return 0;
+      break;
+    }
+  }
+
+  mlpdouble DimensionalizeOutput(mlpdouble val_output_norm, std::size_t iOutput) const {
+    mlpdouble val_dim_output;
+    switch(input_reg_method)
+    {
+    case ENUM_SCALING_FUNCTIONS::MINMAX:
+      val_dim_output = (output_norm[iOutput].second - output_norm[iOutput].first) * val_output_norm + output_norm[iOutput].first;
+      break;
+    case ENUM_SCALING_FUNCTIONS::STANDARD:
+    case ENUM_SCALING_FUNCTIONS::ROBUST:
+      val_dim_output = output_norm[iOutput].second * val_output_norm + output_norm[iOutput].first;
+      break;
+    default:
+      break;
+    }
+    return val_dim_output;
+  }
+
+
+  bool CheckInputInclusion(mlpdouble val_input, size_t iInput) const {
+    bool inside {true};
+    mlpdouble val_input_norm;
+    switch(input_reg_method)
+    {
+    case ENUM_SCALING_FUNCTIONS::MINMAX:
+      if ((val_input < input_norm[iInput].first) || 
+          (val_input > input_norm[iInput].second))
+          inside = false;
+      break;
+    case ENUM_SCALING_FUNCTIONS::STANDARD:
+      val_input_norm = (val_input - input_norm[iInput].first) / input_norm[iInput].second;
+      if ((val_input_norm < -2.0) || (val_input_norm > 2.0))
+        inside = false;
+      break;
+    case ENUM_SCALING_FUNCTIONS::ROBUST:
+      val_input_norm = (val_input - input_norm[iInput].first) / input_norm[iInput].second;
+      if ((val_input_norm < -1.0) || (val_input_norm > 1.0))
+        inside = false;
+      break;
+    default:
+      break;
+    }
+    
+    return inside;
+  }
+
+  mlpdouble GetCenter(size_t iInput) {
+    switch(input_reg_method)
+    {
+    case ENUM_SCALING_FUNCTIONS::MINMAX:
+      return 0.5*(input_norm[iInput].first + input_norm[iInput].second);
+      break;
+    case ENUM_SCALING_FUNCTIONS::STANDARD:
+    case ENUM_SCALING_FUNCTIONS::ROBUST:
+      return input_norm[iInput].first;
+      break;
+    default:
+      return 0;
+      break;
+    }
   }
 };
 

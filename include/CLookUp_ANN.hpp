@@ -75,6 +75,10 @@ private:
     /* Read MLP input file */
     Reader.ReadMLPFile();
 
+    /* Set input and output regularization methods */
+    ANN.SetInputRegularization(Reader.GetInputRegularization());
+    ANN.SetOutputRegularization(Reader.GetOutputRegularization());
+
     /* Generate basic layer architectures */
     ANN.DefineInputLayer(Reader.GetNInputs());
     for (auto iInput = 0u; iInput < Reader.GetNInputs(); iInput++) {
@@ -215,22 +219,14 @@ public:
 
       mlpdouble distance_to_query_i = 0;
       for (auto i_input = 0u; i_input < ANN_inputs.size(); i_input++) {
-        auto ANN_input_limits = NeuralNetworks[i_ANN].GetInputNorm(i_input);
-
-        /* Check if query input lies outside MLP training range */
-        if ((ANN_inputs[i_input] < ANN_input_limits.first) ||
-            (ANN_inputs[i_input] > ANN_input_limits.second)) {
-          within_range = false;
-        }
+        within_range = NeuralNetworks[i_ANN].CheckInputInclusion(ANN_inputs[i_input], i_input);
+        
 
         /* Calculate distance between MLP training range center point and query
          */
-        mlpdouble middle =
-            0.5 * (ANN_input_limits.second + ANN_input_limits.first);
+        mlpdouble middle = NeuralNetworks[i_ANN].GetCenter(i_input);
         distance_to_query_i +=
-            pow((ANN_inputs[i_input] - middle) /
-                    (ANN_input_limits.second - ANN_input_limits.first),
-                2);
+            pow(NeuralNetworks[i_ANN].NormalizeInput(ANN_inputs[i_input] - middle, i_input), 2);
       }
 
       /* Evaluate MLP when query inputs lie within training data range */
@@ -267,7 +263,7 @@ public:
       }
 
       /* Update minimum distance to query */
-      if (sqrt(distance_to_query_i) < distance_to_query) {
+      if (distance_to_query_i < distance_to_query) {
         i_ANN_nearest = i_ANN;
         distance_to_query = distance_to_query_i;
         i_map_nearest = i_map;

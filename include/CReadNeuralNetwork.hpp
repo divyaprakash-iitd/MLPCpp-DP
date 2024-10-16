@@ -61,6 +61,9 @@ private:
   std::vector<std::pair<mlpdouble, mlpdouble>>
       input_norm,  /*!< Input variable normalization values (min, max). */
       output_norm; /*!< Output variable normalization values (min, max). */
+  
+  ENUM_SCALING_FUNCTIONS input_reg_method {ENUM_SCALING_FUNCTIONS::MINMAX},
+                         output_reg_method {ENUM_SCALING_FUNCTIONS::MINMAX};
 public:
   /*!
    * \brief CReadNeuralNetwork class constructor
@@ -157,6 +160,14 @@ public:
         }
       }
 
+      if (line.compare("[input regularization method]") == 0) {
+        getline(file_stream, line);
+        std::istringstream input_norm_stream(line);
+        input_norm_stream >> word;
+        input_reg_method = scaling_map.find(word)->second;
+      }
+
+
       /* In case input normalization is applied, read upper and lower input
        * bounds
        */
@@ -189,6 +200,13 @@ public:
               "No layer count provided before providing "
               "layer activation functions");
         }
+      }
+
+      if (line.compare("[output regularization method]") == 0) {
+        getline(file_stream, line);
+        std::istringstream input_norm_stream(line);
+        input_norm_stream >> word;
+        output_reg_method = scaling_map.find(word)->second;
       }
 
       /* In case output normalization is applied, read upper and lower output
@@ -355,6 +373,10 @@ public:
     return input_names[iInput];
   }
 
+  ENUM_SCALING_FUNCTIONS GetInputRegularization() const {
+    return input_reg_method;
+  }
+
   /*!
    * \brief Get output variable name.
    * \param[in] iOutput - Output variable index.
@@ -362,6 +384,10 @@ public:
    */
   std::string GetOutputName(std::size_t iOutput) const {
     return output_names[iOutput];
+  }
+
+  ENUM_SCALING_FUNCTIONS GetOutputRegularization() const {
+    return output_reg_method;
   }
 };
 } // namespace MLPToolbox

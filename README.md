@@ -25,6 +25,14 @@ The main class governing  which can be used for look-up operations is the CLookU
 It is possible to load multiple networks with different input and output variables. An error will be raised if none of the loaded MLP's contains all the input variables or if some of the desired outputs are missing from the MLP output variables.
 In addition to loading multiple networks with different input and output variables, it is possible to load multple networks with the same input and output variables, but with different data ranges. When performing a regression operation, the CLookUp_ANN class will check which of the loaded MLPs with the right input and output variables has an input variable normalization range that includes the query point. The corresponding MLP will then be selected for regression. If the query point lies outside the data range of all loaded MLPs, extrapolation will be performed using the MLP with a data range close to the query point. 
 
+# Regularization of inputs and outputs 
+MLP's are often trained on regularized input and labeled data. MLPCpp supports three regularization methods: [min-max scaling](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MinMaxScaler.html#sklearn.preprocessing.MinMaxScaler), [standard deviation scaling](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html#sklearn.preprocessing.StandardScaler), and [robust scaling](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.RobustScaler.html#sklearn.preprocessing.RobustScaler). The default option is min-max scaling (feature range 0-1). 
+
+Specify the regularization method in the header under [input regularization method] or [output regularization method] and list the following two normalization values under [input normalization] and [output normalization] respectively:
+1. min-max ("minmax") : training data lower limit, training data upper limit
+2. standard deviation ("standard") : mean value, standard deviation
+3. robust ("robust") : mean value, quantile range 
+
 # MLP Definition and Usage
 The input files required for loading MLP's into C++ through the MLPCpp library are in ASCII format. A supporting script is provided with allows for the translation of an MLP trained through Tensorflow to a supported .mlp file. This script is named "Tensorflow_Translation.py" script, which can be found under "src". Details regarding the functionality of this translation script can be found in the code itself.
 
@@ -32,3 +40,7 @@ Using the MLPCpp library in your code is as simple as including the "CLookUp_ANN
 
 # Gradient Computation
 The MLPCpp module allows for the evaluation of the analytical first-order and second-order derivatives of the network outputs with respect to the network inputs without the use of algorithmic differentiation. This can be useful in iterative Newton solvers for example. Gradient computation is enabled by supplying additional inputs to the "Predict_ANN" method, as is demonstrated in "main.cpp"
+
+# Test Case
+
+Under ```TestCase```, one can find a demonstration of the MLPCpp library. [Here](TestCase/test_problem.py), an MLP with two inputs and one output is trained using TensorFlow, converted to MLPCpp ASCII format, and evaluated using the functions in the MLPCpp library. 

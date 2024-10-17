@@ -25,9 +25,9 @@ def Translate_Tensorflow_MLP(file_out:str, input_names:list[str], output_names:l
     model_config = model.get_config()
 
     # Number of input variables in the model
-    n_inputs = model_config['layers'][0]['config']['batch_input_shape'][1]
+    n_inputs = len(input_names)
     # Number of output variables in the model
-    n_outputs = model_config['layers'][-1]['config']['units']
+    n_outputs = len(output_names)
 
     # Checking if number of provided input and output names are equal to those in the model
     if not n_inputs == len(input_names):
@@ -62,7 +62,8 @@ def Translate_Tensorflow_MLP(file_out:str, input_names:list[str], output_names:l
         if layer_class == 'InputLayer':
             # In case of the input layer, the input shape is written instead of the number of units
             activation_functions.append('linear')
-            n_neurons = model_config['layers'][iLayer]['config']['batch_input_shape'][1]
+            print(model_config['layers'][iLayer]['config'])
+            n_neurons = model_config['layers'][iLayer]['config']['batch_shape'][1]
         else:
             activation_functions.append(model_config['layers'][iLayer]['config']['activation'])
             n_neurons = model_config['layers'][iLayer]['config']['units']

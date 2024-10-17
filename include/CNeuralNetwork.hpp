@@ -2,7 +2,7 @@
 * \file CNeuralNetwork.hpp
 * \brief Declaration of the CNeuralNetwork class.
 * \author E.C.Bunschoten
-* \version 1.1.0
+* \version 1.2.0
 *
 * MLPCpp Project Website: https://github.com/EvertBunschoten/MLPCpp
 *
@@ -38,7 +38,6 @@
 
 #include "CLayer.hpp"
 #include "variable_def.hpp"
-#include "option_maps.hpp"
 
 namespace MLPToolbox {
 class CNeuralNetwork {

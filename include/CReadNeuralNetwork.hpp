@@ -2,7 +2,7 @@
 * \file CReadNeuralNetwork.hpp
 * \brief Read MLP input files.
 * \author E.C.Bunschoten
-* \version 1.1.0
+* \version 1.2.0
 *
 * MLPCpp Project Website: https://github.com/EvertBunschoten/MLPCpp
 *
@@ -62,6 +62,15 @@ private:
       input_norm,  /*!< Input variable normalization values (min, max). */
       output_norm; /*!< Output variable normalization values (min, max). */
   
+  /*!
+  * \brief Available activation function map.
+  */
+  std::map<std::string, ENUM_SCALING_FUNCTIONS> scaling_map{
+      {"minmax", ENUM_SCALING_FUNCTIONS::MINMAX},
+      {"standard", ENUM_SCALING_FUNCTIONS::STANDARD},
+      {"robust", ENUM_SCALING_FUNCTIONS::ROBUST},
+  };
+
   ENUM_SCALING_FUNCTIONS input_reg_method {ENUM_SCALING_FUNCTIONS::MINMAX},
                          output_reg_method {ENUM_SCALING_FUNCTIONS::MINMAX};
 public:

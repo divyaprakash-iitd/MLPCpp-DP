@@ -2,7 +2,7 @@
 * \file CLayer.hpp
 * \brief Dense layer class definition used within the CNeuralNetwork class.
 * \author E.C.Bunschoten
-* \version 1.1.0
+* \version 1.2.0
 *
 * MLPCpp Project Website: https://github.com/EvertBunschoten/MLPCpp
 *

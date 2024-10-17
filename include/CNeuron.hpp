@@ -2,7 +2,7 @@
 * \file CNeuron.hpp
 * \brief Declaration of the CNeuron class within the CLayer class.
 * \author E.C.Bunschoten
-* \version 1.1.0
+* \version 1.2.0
 *
 * MLPCpp Project Website: https://github.com/EvertBunschoten/MLPCpp
 *
@@ -34,6 +34,7 @@
 #include <iostream>
 #include <limits>
 #include <vector>
+#include "option_maps.hpp"
 
 namespace MLPToolbox {
 class CNeuron {

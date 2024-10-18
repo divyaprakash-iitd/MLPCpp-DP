@@ -874,7 +874,7 @@ public:
   }
 
   mlpdouble NormalizeInput(mlpdouble val_input_dim, std::size_t iInput) const {
-    mlpdouble val_norm_input;
+    mlpdouble val_norm_input{0};
     switch(input_reg_method)
     {
     case ENUM_SCALING_FUNCTIONS::MINMAX:
@@ -882,9 +882,8 @@ public:
       break;
     case ENUM_SCALING_FUNCTIONS::STANDARD:
     case ENUM_SCALING_FUNCTIONS::ROBUST:
-      val_norm_input= (val_input_dim - input_norm[iInput].first) / input_norm[iInput].second;
-      break;
     default:
+      val_norm_input= (val_input_dim - input_norm[iInput].first) / input_norm[iInput].second;
       break;
     }
     return val_norm_input;
@@ -915,7 +914,7 @@ public:
   }
 
   mlpdouble DimensionalizeOutput(mlpdouble val_output_norm, std::size_t iOutput) const {
-    mlpdouble val_dim_output;
+    mlpdouble val_dim_output{0};
     switch(input_reg_method)
     {
     case ENUM_SCALING_FUNCTIONS::MINMAX:
@@ -923,9 +922,8 @@ public:
       break;
     case ENUM_SCALING_FUNCTIONS::STANDARD:
     case ENUM_SCALING_FUNCTIONS::ROBUST:
-      val_dim_output = output_norm[iOutput].second * val_output_norm + output_norm[iOutput].first;
-      break;
     default:
+      val_dim_output = output_norm[iOutput].second * val_output_norm + output_norm[iOutput].first;
       break;
     }
     return val_dim_output;

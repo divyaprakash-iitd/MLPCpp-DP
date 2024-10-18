@@ -949,7 +949,7 @@ public:
       break;
     case ENUM_SCALING_FUNCTIONS::ROBUST:
       val_input_norm = (val_input - input_norm[iInput].first) / input_norm[iInput].second;
-      if ((val_input_norm < -1.0) || (val_input_norm > 1.0))
+      if ((val_input_norm < -10.0) || (val_input_norm > 10.0))
         inside = false;
       break;
     default:

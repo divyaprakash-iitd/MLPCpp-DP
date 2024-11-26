@@ -177,6 +177,32 @@ public:
     return std::make_pair(CV_min, CV_max);
   }
 
+  
+  /*!
+   * \brief Get the median input regularization value for a specific look-up operation.
+   * \param[in] input_output_map - Pointer to input-output
+   * map for look-up operation. 
+   * \param[in] input_index - Input variable index
+   * for which to get the input median.
+   * \returns Input median value.
+   */
+  mlpdouble GetInputOffset(MLPToolbox::CIOMap *input_output_map,
+               std::size_t input_index) const {
+    mlpdouble CV_center{0.0};
+
+    for (auto i_map = 0u; i_map < input_output_map->GetNMLPs(); i_map++) {
+      auto i_ANN = input_output_map->GetMLPIndex(i_map);
+      auto i_input = input_output_map->GetInputIndex(i_map, input_index);
+      std::pair<mlpdouble, mlpdouble> ANN_input_limits =
+          NeuralNetworks[i_ANN].GetInputNorm(i_input);
+      mlpdouble center = NeuralNetworks[i_ANN].GetRegularizationOffset(i_input, true);
+      CV_center += center;
+    }
+
+    CV_center /= input_output_map->GetNMLPs();
+    return CV_center;
+  }
+
   /*!
    * \brief Evaluate loaded ANNs for given inputs and outputs
    * \param[in] input_output_map - input-output map coupling desired inputs and
@@ -224,7 +250,7 @@ public:
 
         /* Calculate distance between MLP training range center point and query
          */
-        mlpdouble middle = NeuralNetworks[i_ANN].GetCenter(i_input);
+        mlpdouble middle = NeuralNetworks[i_ANN].GetRegularizationOffset(i_input);
         distance_to_query_i +=
             pow(NeuralNetworks[i_ANN].NormalizeInput(ANN_inputs[i_input] - middle, i_input), 2);
       }

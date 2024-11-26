@@ -848,7 +848,7 @@ public:
    * \param[in] iNeuron - Layer neuron index.
    * \param[in] jInput - First input variable index used for derivative.
    * \param[in] kInput - Second input variable index used for derivative.
-   * \returns Weighted sum of prefious layer second derivatives w.r.t. input
+   * \returns Weighted sum of previous layer second derivatives w.r.t. input
    * variables.
    */
   mlpdouble ComputeChi(std::size_t iLayer, std::size_t iNeuron,
@@ -862,6 +862,13 @@ public:
     return chi;
   }
 
+  /*!
+   * \brief Compute the weighted sum of the weighted output derivatives of the previous layer.
+   * \param[in] iLayer - Current network layer index.
+   * \param[in] iNeuron - Neuron index of current layer.
+   * \param[in] iInput - Input index for which to compute derivative.
+   * \returns Weighted sum of previous layer output derivatives.
+   */
   mlpdouble ComputedOutputdInput(std::size_t iLayer, std::size_t iNeuron,
                                  std::size_t iInput) const {
     mlpdouble doutput_dinput = 0;
@@ -873,6 +880,12 @@ public:
     return doutput_dinput;
   }
 
+  /*!
+   * \brief Normalize the network input.
+   * \param[in] val_input_dim - Dimensional input value.
+   * \param[in] iInput - Input index.
+   * \returns Normalized network input value.
+   */
   mlpdouble NormalizeInput(mlpdouble val_input_dim, std::size_t iInput) const {
     mlpdouble val_norm_input{0};
     switch(input_reg_method)
@@ -905,6 +918,30 @@ public:
         return input_norm[iInput].second;
       } else {
         return output_norm[iInput].second;
+      }
+      break;
+    default:
+      return 0;
+      break;
+    }
+  }
+
+  mlpdouble GetRegularizationOffset(std::size_t iInput, bool is_input=true) const {
+    switch(input_reg_method)
+    {
+    case ENUM_SCALING_FUNCTIONS::MINMAX:
+      if (is_input) {
+        return 0.5*(input_norm[iInput].second + input_norm[iInput].first);
+      } else {
+        return 0.5*(output_norm[iInput].second + output_norm[iInput].first);
+      }
+      break;
+    case ENUM_SCALING_FUNCTIONS::STANDARD:
+    case ENUM_SCALING_FUNCTIONS::ROBUST:
+      if (is_input) {
+        return input_norm[iInput].first;
+      } else {
+        return output_norm[iInput].first;
       }
       break;
     default:
@@ -957,21 +994,6 @@ public:
     return inside;
   }
 
-  mlpdouble GetCenter(size_t iInput) {
-    switch(input_reg_method)
-    {
-    case ENUM_SCALING_FUNCTIONS::MINMAX:
-      return 0.5*(input_norm[iInput].first + input_norm[iInput].second);
-      break;
-    case ENUM_SCALING_FUNCTIONS::STANDARD:
-    case ENUM_SCALING_FUNCTIONS::ROBUST:
-      return input_norm[iInput].first;
-      break;
-    default:
-      return 0;
-      break;
-    }
-  }
 };
 
 } // namespace MLPToolbox

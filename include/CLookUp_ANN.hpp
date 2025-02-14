@@ -193,8 +193,6 @@ public:
     for (auto i_map = 0u; i_map < input_output_map->GetNMLPs(); i_map++) {
       auto i_ANN = input_output_map->GetMLPIndex(i_map);
       auto i_input = input_output_map->GetInputIndex(i_map, input_index);
-      std::pair<mlpdouble, mlpdouble> ANN_input_limits =
-          NeuralNetworks[i_ANN].GetInputNorm(i_input);
       mlpdouble center = NeuralNetworks[i_ANN].GetRegularizationOffset(i_input, true);
       CV_center += center;
     }

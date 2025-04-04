@@ -1,3 +1,6 @@
+# MLPCpp (Fork)
+This is a fork of the [original MLPCpp repository](https://github.com/EvertBunschoten/MLPCpp) created for GSoC 2025 proposal development.
+
 ---
 title: Multi-Layer Perceptron regression in C++ code
 ---
